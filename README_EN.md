@@ -4,17 +4,25 @@
 
 ## 1.1 Brief Introduction
 
+This paper aims to construct a blood glucose level time series prediction model to assist diabetes patients in managing their blood sugar levels. Firstly, we delve into understanding the mechanisms of blood glucose regulation, factors influencing blood glucose levels, and the management methods for different types of diabetes. Secondly, based on the relevant data from the `Shanghai_T1DM` and `Shanghai_T2DM` datasets, we perform data cleaning, handle missing and outlier values, and conduct necessary data transformations and normalization. In terms of feature engineering, we select or construct features critical to glucose prediction based on domain knowledge, explore correlations among features, and perform feature selection or dimensionality reduction to enhance model efficiency. Next, we investigate and compare machine learning models suitable for time series glucose prediction, with the flexibility to choose methods from the latest papers or classical and effective approaches. The goal is to implement the selected model and fine-tune parameters to optimize prediction performance. Subsequently, we evaluate the model's predictive accuracy and generalization capacity using techniques such as cross-validation, AUC-ROC curves, and mean squared error. Finally, we conduct a thorough analysis of prediction outcomes, examining the impact of different factors on prediction accuracy, and present prediction results and model performance clearly using graphs and visualization tools. The aim is to predict blood glucose levels at 15, 30, 45, and 60 minutes and document the analysis results in this report.
+
 ## 1.2 Current Mainstream Blood Glucose Prediction Methods
 
-## 1.3 
-
-## 1.4 Team Member
+## 1.3 Team Member
 
 2151617 Zheng Zhi 2152970 Li Jinlin 2154306 Li Zekai 2154314 Zheng Kai
 
 # 2 Dataset Analysis
 
 ## 2.1 Dataset Introduction
+
+The datasets `ShanghaiT1DM` and `ShanghaiT2DM` comprise two folders named `Shanghai_T1DM` and `Shanghai_T2DM` and two summary sheets named `Shanghai_T1DM_Summary.csv` and `Shanghai_T2DM_Summary.csv`.
+
+The `Shanghai_T1DM` folder and `Shanghai_T2DM` folder contain 3 to 14 days of `CGM` data corresponding to 12 patients with T1DM and 100 patients with T2DM, respectively. Of note, for one patient, there might be multiple periods of `CGM` recordings due to different visits to the hospital, which were stored in different excel tables. In fact, collecting data from different periods in one patient can reflect the changes of diabetes status during the follow-up. The excel table is named by the `patient ID`, `period number` and the `start date` of the `CGM` recording. Thus, for 12 patients with T1DM, there are 8 patients with 1 period of the `CGM` recording and 2 patients with 3 periods, totally equal to 16 excel tables in the `Shanghai_T1DM` folder. As for 100 patients with T2DM, there are 94 patients with 1 period of `CGM` recording, 6 patients with 2 periods, and 1 patient with 3 periods, amounting to 109 excel tables in the `Shanghai_T2DM` folder. Overall, the excel tables include `CGM` BG values every 15 minutes, capillary blood glucose `CBG` values, `blood ketone`, self-reported `dietary intake`, `insulin doses` and `non-insulin hypoglycemic agents`. The `blood ketone` was measured when diabetic ketoacidosis was suspected with a considerably high glucose level. Insulin administration includes continuous subcutaneous insulin infusion using insulin pump, multiple daily injections with insulin pen, and insulin that were given intravenously in case of an extremely high BG level.
+
+Each excel table in the `Shanghai_T1DM` folder and `Shanghai_T2DM` folder contains the following data fields: `Date` Recording time of the `CGM` data. `CGM` CGM data recorded every 15 minutes. `CBG` CBG level measured by the glucose meter. `Blood ketone` Plasma-hydroxybutyrate measured with ketone test strips (Abbott Laboratories, Abbott Park, Illinois, USA). `Dietary intake` Self-reported time and weighed food intake `Insulin dose-s.c.` Subcutaneous insulin injection with insulin pen. `Insulin dose-i.v.` Dose of intravenous insulin infusion. `Non-insulin hypoglycemic agents` Hypoglycemic agents other than insulin. `CSII-bolus insulin` Dose of insulin delivered before a meal through insulin pump. `CSII-basal insulin `The rate (iu/per hour) at which basal insulin was continuously infused through insulin pump.
+
+The summary sheets summarize the clinical characteristics, laboratory measurements and medications of the patients included in this study, with each row corresponding to one excel table in `Shanghai_T1DM` and `Shanghai_T2DM `folders. Clinical characteristics include `patient ID`, `gender`, `age`, `height`, `weight`, `BMI`, `smoking and drinking history`, `type of diabetes`, `duration of diabetes`, `diabetic complications`, `comorbidities` as well as `occurrence of hypoglycemia`. Laboratory measurements contain fasting and 2-hour postprandial plasma glucose/C-peptide/insulin, hemoglobin A1c (HbA1c), glycated albumin, total cholesterol, triglyceride, high-density lipoprotein cholesterol, low-density lipoprotein cholesterol, creatinine, estimated glomerular filtration rate, uric acid and blood urea nitrogen. Both hypoglycemic agents and medications given for other diseases before the `CGM` reading were also recorded.
 
 ## 2.2 Data Pre-process
 
