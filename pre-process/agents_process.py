@@ -5,10 +5,10 @@ import json
 # 统计有多少种药物并编号
 urls = ['Shanghai_T1DM_Summary.csv', 'Shanghai_T2DM_Summary.csv']
 agents = set()
-agents_dict = {}
+agents_list = []
 
 for url in urls:
-    full_url = os.path.join('datasets', url)
+    full_url = os.path.join('raw-data', url)
     df = pd.read_csv(full_url)
     df_agents = df["Hypoglycemic Agents"]
     for i in df_agents:
@@ -17,13 +17,13 @@ for url in urls:
             if j != 'none':
                 agents.add(j.strip())
 
-# print(len(agents))
-# print(agents)
 
-for index, agent in enumerate(agents):
-    agents_dict[agent] = index
+for agent in agents:
+    agents_list.append(agent)
 
-agent_str = json.dumps(agents_dict, indent=2)
+agents_list_sorted = sorted(agents_list, key=len)
+
+agent_str = json.dumps(agents_list, indent=2)
 
 with open('agents_info.json', 'w') as file:
     file.write(agent_str)

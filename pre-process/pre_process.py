@@ -3,6 +3,7 @@ import pandas as pd
 from pandas import DataFrame
 import json
 import re
+import time
 
 def read_csv(url) -> DataFrame:
     return pd.read_csv(url)
@@ -62,115 +63,143 @@ def dietary_intake_process(df: DataFrame) -> DataFrame:
 # 皮下注射
 def insulin_dose_sc_process(df: DataFrame) -> DataFrame:
     attribute_name = 'Insulin dose - s.c.'
-    with open('agents_info.json', 'r') as file:
+    df_insulin_attribute = []
+    with open('insulin_agents.json', 'r') as file:
         agents_map = json.loads(file.read())
+    for a in agents_map:
+        df_insulin_attribute.append(attribute_name + ' ' + a)
+    df_insulin_dose = pd.DataFrame(columns=df_insulin_attribute, index=range(df.shape[0]))
     df_attribute = df[attribute_name]
-    new_attribute_1 = df_attribute.copy()
-    new_attribute_2 = df_attribute.copy()
     for index, row in enumerate(df_attribute):
-        # print(row)
-        if pd.isna(row):
-            new_attribute_1[index] = "-1"
-            new_attribute_2[index] = "0"
-        else:
+        for a in df_insulin_attribute:
+                df_insulin_dose[a][index] = 0
+        if not pd.isna(row):
             agents = row.split(';')
-            # print(index, row, agents)
-            insulins = []
-            dose = []
-            for i, agent in enumerate(agents):
-                # if i % 2 == 0:
-                #     t = re.sub('\xa0', ' ', agent.strip())
-                #     insulins.append(str(agents_map[t]))
-                # else:
-                #     dose.append(str(agent.strip()))
+            for _, agent in enumerate(agents):
                 for a in agents_map:
                     if re.search(a, agent):
-                        insulins.append(str(agents_map[a]))
                         ds = re.sub(a, '', agent)
                         ds = re.sub(',', '', ds)
                         ds = re.sub('IU', '', ds)
-                        dose.append(ds.strip())
-            new_attribute_1[index] = ','.join(insulins)
-            new_attribute_2[index] = ','.join(dose)
+                        ds = ds.strip()
+                        df_insulin_dose[attribute_name + ' ' + a][index] = ds
+                        pattren = r'\d+'
+                        if not re.match(pattren, ds):
+                            print(ds) 
 
 
-    df['Insulin kind - s.c.'] = new_attribute_1
-    df['Dose - s.c.'] = new_attribute_2
-    df = df.drop(columns=['Insulin dose - s.c.'])
+    df = df.drop(columns=[attribute_name])
+    df = pd.concat([df, df_insulin_dose], axis=1)
     return df
 
 # 静脉注射
 def insulin_dose_iv_process(df: DataFrame) -> DataFrame:
     attribute_name = 'Insulin dose - i.v.'
-    with open('agents_info.json', 'r') as file:
+    df_insulin_attribute = []
+    with open('insulin_agents.json', 'r') as file:
         agents_map = json.loads(file.read())
+    for a in agents_map:
+        df_insulin_attribute.append(attribute_name + ' ' + a)
+    df_insulin_dose = pd.DataFrame(columns=df_insulin_attribute, index=range(df.shape[0]))
     df_attribute = df[attribute_name]
-    new_attribute_1 = df_attribute.copy()
-    new_attribute_2 = df_attribute.copy()
     for index, row in enumerate(df_attribute):
-        # print(row)
-        if pd.isna(row):
-            new_attribute_1[index] = "-1"
-            new_attribute_2[index] = "0"
-        else:
+        for a in df_insulin_attribute:
+            df_insulin_dose[a][index] = 0
+        if not pd.isna(row):
             agents = row.split(',')
-            insulins = []
-            dose = []
             for _, agent in enumerate(agents):
                 for a in agents_map:
                     if re.search(a, agent):
-                        insulins.append(str(agents_map[a]))
                         ds = re.sub(a, '', agent)
                         ds = re.sub('IU', '', ds)
-                        dose.append(ds.strip())
-            # if insulins != []:
-            new_attribute_1[index] = ','.join(insulins)
-            new_attribute_2[index] = ','.join(dose)
+                        ds = ds.strip()
+                        df_insulin_dose[attribute_name + ' ' + a][index] = ds
+                        pattren = r'\d+'
+                        if not re.match(pattren, ds):
+                            print(ds)     
 
 
-    df['Insulin kind - i.v.'] = new_attribute_1
-    df['Dose - i.v.'] = new_attribute_2
     df = df.drop(columns=[attribute_name])
+    df = pd.concat([df, df_insulin_dose], axis=1)
     return df
+
+
 
 
 
 # 非胰岛素药物
 def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
     attribute_name = 'Non-insulin hypoglycemic agents'
-    with open('agents_info.json', 'r') as file:
+    df_non_insulin_attribute = []
+    with open('non_insulin_agents.json', 'r') as file:
         agents_map = json.loads(file.read())
+    for a in agents_map:
+        df_non_insulin_attribute.append(attribute_name + ' ' + a)
+    df_insulin_dose = pd.DataFrame(columns=df_non_insulin_attribute, index=range(df.shape[0]))
     df_attribute = df[attribute_name]
-    new_attribute_1 = df_attribute.copy()
-    new_attribute_2 = df_attribute.copy()
+
+    
     for index, row in enumerate(df_attribute):
-        # if index == 861:
-        #     print(row)
-        if pd.isna(row):
-            new_attribute_1[index] = "-1"
-            new_attribute_2[index] = "0"
-        else:
+        if not pd.isna(row):
             agents = row.split(' ')
-            insulins = []
-            dose = []
+            non_insulins = ''
+            get_insulins = False
+            
             for i, agent in enumerate(agents):
                 if i % 3 == 0:
                     for a in agents_map:
                         if re.search(a, agent):
-                            insulins.append(a)
+                            non_insulins = a
+                            get_insulins = True
                 elif i % 3 == 1:
-                    dose.append(str(agent.strip()))
+                    if get_insulins == True:
+                        dose = str(agent.strip())
+                        try:
+                            df_insulin_dose[attribute_name + ' ' + non_insulins][index] = dose
+                        except UnboundLocalError as e:
+                            print(attribute_name + ' ' + insulins)
+                            exit(-1)
+
+                        pattren = r'\d+'
+                        if not re.match(pattren, dose):
+                            print(dose)
+                    
                 else:
+                    insulins = ''
                     continue
-            new_attribute_1[index] = ','.join(insulins)
-            new_attribute_2[index] = ','.join(dose)
 
 
-    df['Non-insulin hypoglycemic agents'] = new_attribute_1
-    df['Non-insulin hypoglycemic agents dose'] = new_attribute_2
-    # print(new_attribute_2[861])
-    # print(new_attribute_1[861])
+    df = df.drop(columns=[attribute_name])
+    df = pd.concat([df, df_insulin_dose], axis=1)
     return df
+
+
+def process_CBG_blood_ketone(df:DataFrame) -> DataFrame:
+    return df.drop(columns=['CBG (mg / dl)', 'Blood Ketone (mmol / L)'])
+
+def summary_T1DM_process(df:DataFrame) -> DataFrame:
+    # 删除列
+    cols_delete = [
+        'Diabetic Macrovascular Complications',
+        'Acute Diabetic Complications',
+        'Diabetic Microvascular Complications',
+        'Comorbidities',
+        'Hypoglycemic Agents',  # 药物
+        'Other Agents'          # 药物
+    ]
+    
+
+    # 将给列赋值
+    # Alcohol Drinking History (drinker/non-drinker)
+    #   non-drinker
+    #   drinker
+
+    # Type of Diabetes
+    #   T1DM
+    #   T2DM
+
+    # 
+
 
 if __name__ == '__main__':
     T1DM_url = 'raw-data/Shanghai_T1DM'
@@ -189,6 +218,7 @@ if __name__ == '__main__':
         df = non_insulin_hypoglycemic_process(df)
         df = insulin_dose_iv_process(df)
         df = bolus_insulin_process(df)
+        df = process_CBG_blood_ketone(df)
         save_csv(df, save_url)
 
     print('T1DM已处理完毕')
@@ -218,6 +248,7 @@ if __name__ == '__main__':
         df = non_insulin_hypoglycemic_process(df)
         df = insulin_dose_iv_process(df)
         df = bolus_insulin_process(df)
+        df = process_CBG_blood_ketone(df)
         save_csv(df, save_url)
 
     summarys = ['Shanghai_T1DM_Summary.csv', 'Shanghai_T2DM_Summary.csv']
