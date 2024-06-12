@@ -1,26 +1,26 @@
 # 2024_TJU_Data_Mining-Analysis_Report
 
-# 1 问题分析
+# 1 Issue Analysis
 
-## 1.1 问题概述
+## 1.1 Brief Introduction
 
-## 1.2 当前主流血糖预测方法
+## 1.2 Current Mainstream Blood Glucose Prediction Methods
 
 ## 1.3 
 
-## 1.4 小组人员构成
+## 1.4 Team Member
 
-2151617 郑埴 2152970 李锦霖 2154306 李泽凯 2154314 郑楷
+2151617 Zheng Zhi 2152970 Li Jinlin 2154306 Li Zekai 2154314 Zheng Kai
 
-# 2 数据集分析
+# 2 Dataset Analysis
 
-## 2.1 所用数据集介绍
+## 2.1 Dataset Introduction
 
-## 2.2 数据预处理
+## 2.2 Data Pre-process
 
-### 2.2.1 格式转换
+### 2.2.1 Format Transformation
 
-为方便后续处理，首先将T1DM与T2DM数据集中所有.xlsx文件转化为.csv文件并存储。
+For ease of subsequent pre-processing, first convert all .xlsx files in the T1DM and T2DM datasets to .csv files and store them.
 
 ```python
 for file in T1DM:
@@ -34,7 +34,7 @@ for file in T1DM:
 
 ### 2.2.2 Dietary Intake Pre-process
 
-在原数据集中，有两个Attribute分别表示患者`Dietary Intake`的内容及其英文翻译。我们将这两个Attribute合二为一，简单判断Dietary Intake原数据中是否有内容，若有内容则表示患者此时进食，在输出数据的`Dietary Intake`中标记为`1`，若无进食则在输出数据中标记为`0`。
+In the original dataset, there are two attributes representing the patient's `Dietary Intake` content and its Chinese translation. We will combine these two attributes into one, simply determining whether there is content in the original `Dietary Intake` data. If there is content, it indicates that the patient is eating at that time, and we mark it as `1` in the output data's `Dietary Intake`. If there is no content, we mark it as `0` in the output data.
 
 ```python
 def dietary_intake_process(df: DataFrame) -> DataFrame:
@@ -51,11 +51,11 @@ def dietary_intake_process(df: DataFrame) -> DataFrame:
     return df
 ```
 
-我们忽略进食的具体内容，只考虑患者进食与否，目的是简化后续的模型构建与运算。在数据量较少的前提下，分析患者进食对血糖水平的平均影响，远比分析患者每次进食的具体营养物质对血糖水平的不同影响，来得准确且便捷。
+We ignore the specific content of the meals and only consider whether the patient is eating or not, aiming to simplify the subsequent model construction and computation. Given the limited data, analyzing the average impact of eating on blood glucose levels is more accurate and convenient than analyzing the varying effects of each specific nutrient intake on blood glucose levels.
 
 ### 2.2.3 Agent Details Pre-process
 
-在原数据集中的`Shanghai_T1DM_Summary.csv`与`Shanghai_T2DM_Summary.csv`里介绍了数据集中所有所用的药物名称与其是否含胰岛素的信息。为了方便后续的数据预处理，我们将所有的药物名称通过`agents_process.py`识别并提取到`agents_info.json`中。
+In the original dataset, `Shanghai_T1DM_Summary.csv` and `Shanghai_T2DM_Summary.csv` provide information on all the medications used in the dataset and whether they contain insulin. To facilitate subsequent data preprocessing, we identified and extracted all medication names using `agents_process.py` and saved them in `agents_info.json`.
 
 ```python
 urls = ['Shanghai_T1DM_Summary.csv', 'Shanghai_T2DM_Summary.csv']
@@ -83,11 +83,11 @@ agent_str = json.dumps(agents_list, indent=2)
 with open('agents_info.json', 'w') as file:
     file.write(agent_str)
 ```
-之后将含胰岛素的降糖药物名称提取并保存至`insulin_agents.json`，将不含胰岛素的降糖药物名称提取并保存至`non_insulin_agents.json`。
+Then we extracted and saved the names of insulin-containing antidiabetic medications to `insulin_agents.json`, and the names of non-insulin antidiabetic medications to `non_insulin_agents.json`.
 
 ### 2.2.4 Insulin Dose - s.c. Pre-process
 
-在原数据集中有Attribute`Insulin Dose - s.c.`以类似`Novolin R, 2 IU`的形式记录患者通过皮下注射的药物名称与剂量，逗号前是药物名称，逗号后是注射剂量。为此我们设计了方法分别提取`Insulin Dose - s.c.`这一Attribute中所记录的药物名称与剂量，并记录在输出数据中。
+In the original dataset, there is an attribute `Insulin Dose - s.c.` that records the medication name and dosage administered via subcutaneous injection in the format `Novolin R, 2 IU`, with the medication name before the comma and the dosage after the comma. To handle this, we designed a method to separately extract the medication name and dosage from the `Insulin Dose - s.c.` attribute and record them in the output data.
 
 ```python
 def insulin_dose_sc_process(df: DataFrame) -> DataFrame:
@@ -122,11 +122,11 @@ def insulin_dose_sc_process(df: DataFrame) -> DataFrame:
     return df
 ```
 
-值得注意的是，由于单次注射不一定注射单一种类药物，而可能同时注射两种甚至更多的不同种类药物，因此我们在预处理后的输出数据中，不采用将`Insulin Dose - s.c.`这一Attribute转化为`Insulin Kind`和`Dose`两种Attribute的常规方法，而是把`insulin_agents.json`中所有出现过的含胰岛素的降糖药物名称都分别设置为新属性，在输出数据中仅在对应药物种类属性下记录剂量，单位为IU，若无此种药物则剂量记为`0`。如此便可处理两种甚至更多的不同种类药物同时注射的情况。
+It is worth noting that a single injection may not always involve only one type of medication but could simultaneously include two or more different types. Therefore, in the preprocessed output data, we do not use the conventional method of converting the `Insulin Dose - s.c.` attribute into `Insulin Kind` and `Dose` attributes. Instead, we set all the insulin-containing antidiabetic medication names that appear in `insulin_agents.json` as new attributes. In the output data, we only record the dosage under the corresponding medication type attribute, with the unit in IU. If a particular medication is not present, the dosage is recorded as `0`. This approach allows us to handle cases where two or more different types of medications are injected simultaneously.
 
 ### 2.2.5 Insulin Dose - i.v. Pre-process
 
-在原数据集中有Attribute`Insulin Dose - s.c.`以类似`500ml 0.9% sodium chloride,  12 IU Novolin R,  10 ml 10% potassium chloride`的形式记录患者通过静脉注射的药物名称与剂量。我们忽略前后两种对血糖无影响的辅药成分，仅提取每条记录中间对于血糖浓度有影响的降糖药物主要成分。
+In the original dataset, the attribute `Insulin Dose - s.c.` records the names and doses of medications administered to patients via intravenous injection, similar to `500ml 0.9% sodium chloride, 12 IU Novolin R, 10 ml 10% potassium chloride`. We disregard the irrelevant auxiliary medication components before and after, extracting only the main components of antidiabetic medications that affect blood glucose concentration from the middle of each record.
 
 ```python
 def insulin_dose_iv_process(df: DataFrame) -> DataFrame:
@@ -160,11 +160,11 @@ def insulin_dose_iv_process(df: DataFrame) -> DataFrame:
     return df
 ```
 
-处理过程与2.2.4类似，把`insulin_agents.json`中所有出现过的含胰岛素的降糖药物名称都分别设置为新属性，在输出数据中仅在对应药物种类属性下记录剂量，单位为IU，若无此种药物则剂量记为`0`。值得注意的是，为了将静脉注射的药物与皮下注射的药物区分开，新添加的各种药物剂量属性中会根据注射形式的不同而有`Insulin dose - s.c.`或`Insulin dose - i.v.`前缀，以便后续模型计算的区分。
+The processing procedure is similar to that of 2.2.4. All antidiabetic medication names appearing in `insulin_agents.json` are set as new attributes separately. In the output data, only the doses are recorded under the corresponding medication type attribute, with the unit being IU. If there is no such medication, the dose is recorded as `0`. It's worth noting that, to differentiate between intravenous and subcutaneous injections, the newly added medication dose attributes will have prefixes `Insulin dose - s.c.` or `Insulin dose - i.v.` based on the injection form, facilitating subsequent model calculations.
 
 ### 2.2.6 Non-insulin Hypoglycemic Agents Pre-process
 
-在原数据集中有Attribute`Non-insulin hypoglycemic agents`记录患者摄入非胰岛素降糖药物的种类与剂量，我们对该Attribute的预处理与2.2.4和2.2.5类似。
+In the original dataset, the attribute `Non-insulin hypoglycemic agents` records the types and doses of non-insulin hypoglycemic agents consumed by patients. Our preprocessing of this attribute is similar to that of sections 2.2.4 and 2.2.5.
 
 ```python
 def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
@@ -213,11 +213,11 @@ def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
     return df
 ```
 
-所有在输出数据中添加的新属性由前缀`Non-insulin hypoglycemic agents`加上药物名称构成，从而与2.2.4和2.2.5过程中添加的新属性区分开，属性中只记录该种药物的剂量。
+All newly added attributes in the output data are formed by prefixing the drug name with `Non-insulin hypoglycemic agents`, distinguishing them from the new attributes added in the processes of sections 2.2.4 and 2.2.5. These attributes only record the dosage of the respective drug.
 
 ### 2.2.7 CSII Pre-process
 
-在原数据集中的Attribute`CSII - bolus insulin (Novolin R, IU)`与`CSII - basal insulin (Novolin R, IU / H)`，后者在.xlsx文件中是以合并单元格的形式表现该时段内的持续基底胰岛素剂量，转化为.csv后出现了一定程度的数据丢失，我们设计了方法将其补全，同样记录在输出数据中一整个时段的`CSII - basal insulin (Novolin R, IU / H)`中，但是是逐条分开记录而非合并记录。
+In the original dataset, the attribute `CSII - bolus insulin (Novolin R, IU)` and `CSII - basal insulin (Novolin R, IU / H)` exist. The latter represents the continuous basal insulin dose within a period, presented in merged cells in the .xlsx file. When converted to .csv format, some data loss occurred. We devised a method to address this issue by completing the missing data. Similarly, in the output data, the entire period's `CSII - basal insulin (Novolin R, IU / H)` is recorded, but each entry is recorded separately instead of being merged.
 
 ```python
 def basal_insulin_process(df: DataFrame) -> DataFrame:
@@ -239,7 +239,7 @@ def basal_insulin_process(df: DataFrame) -> DataFrame:
     return df
 ```
 
-值得注意的是在`CSII - bolus insulin (Novolin R, IU)`与`CSII - basal insulin (Novolin R, IU / H)`两个Attribute中会有`temporarily suspend insulin delivery`记录出现，表示在下一小段时间内停止了持续给药，我们设计了方法识别并在输出数据中将之后时段的剂量记录为`0`直到有新的剂量给出。
+It's worth noting that in both `CSII - bolus insulin (Novolin R, IU)` and `CSII - basal insulin (Novolin R, IU / H)` attributes, there might be records indicating "temporarily suspend insulin delivery," signifying a pause in continuous medication delivery for the next short period. We devised a method to identify and record the subsequent period's dose as `0` in the output data until new dosage information is available.
 
 ```python
 def bolus_insulin_process(df: DataFrame) -> DataFrame:
@@ -259,7 +259,7 @@ def bolus_insulin_process(df: DataFrame) -> DataFrame:
 
 ### 2.2.8 Other Attributes Pre-process
 
-在原数据中给出的其他Attributes中，`Date`与`CGM (mg / dl)`可以直接使用，因此我们将其转移到输出数据中。
+In the original dataset, other attributes such as `Date` and `CGM (mg/dl)` are directly usable, so we transferred them to the output data.
 
 ```python
 def read_csv(url) -> DataFrame:
@@ -269,7 +269,7 @@ def save_csv(df: DataFrame, url: str):
     df.to_csv(url)
 ```
 
-而Attribute`CBG (mg / dl)`指的是采用另一种方式测得的血糖浓度，空值较多难以在模型中处理，且与`CGM (mg / dl)`相重复，因此我们在输出数据中删去了`CBG (mg / dl)`这一Attribute。`Blood Ketone (mmol / L)`表示血酮含量与本问题相关性较差，同时空值也较多难以处理，因此该Attribute也被我们在输出数据中删去。
+But the attribute `CBG (mg/dl)` refers to blood glucose concentration measured in another way, with many empty values that are difficult to handle in the model. Also, it overlaps with `CGM (mg/dl)`, so we removed the `CBG (mg/dl)` attribute from the output data. `Blood Ketone (mmol/L)` indicates blood ketone levels, which have poor relevance to the problem at hand and many missing values, making it challenging to handle. Therefore, we also removed this attribute from the output data.
 
 ```python
 def process_CBG_blood_ketone(df:DataFrame) -> DataFrame:
@@ -278,25 +278,25 @@ def process_CBG_blood_ketone(df:DataFrame) -> DataFrame:
 
 ### 2.2.9 Data Select
 
-在原数据集中的若干.xlsx里，有几份表格因为研究人员的疏忽在记录时出现了严重的格式错误，由于只有极少部分的数据受到影响，因此本着开发成本上的考量，我们不再额外设计方法处理这类格式出现严重问题的数据，而是直接将它们排除。具体理由如下。
+In several .xlsx files in the original dataset, some tables contain serious formatting errors due to oversight by the researchers during recording. Considering the minimal impact on a very small portion of the data and the associated development costs, we opted not to devise additional methods to handle data with severe formatting issues but to exclude them directly. The specific actions and reasons are as follows.
 
 ```python
 ban_url = [
-        '2045_0_20201216.csv', # CSII -bolus insulin没有单位
-        '2095_0_20201116.csv' ,# CSII -bolus insulin没有单位
-        '2013_0_20220123.csv', # 没有饮食，只有进食量
-        '2027_0_20210521.csv', # 胰岛素基础量为中文
-    
-    ]
+    '2045_0_20201216.csv',  # CSII - bolus insulin without unit
+    '2095_0_20201116.csv',  # CSII - bolus insulin without unit
+    '2013_0_20220123.csv',  # No dietary intake, only meal intake
+    '2027_0_20210521.csv',  # Basal insulin dose in Chinese
+
+]
 ```
 
 ### 2.2.10 Pre-Processed Data
 
-使用上述各类方法，我们对`Shanghai_T1DM`与`Shanghai_T2DM`两个数据集中的所有数据进行了预处理，结果保存在`processed-data`文件夹中。处理后数据的属性如下。
+Using the various methods mentioned above, we preprocessed all the data in the `Shanghai_T1DM` and `Shanghai_T2DM` datasets, and the results are saved in the `processed-data` folder. The attributes of the processed data are as follows.
 
 ```
 Date,CGM (mg / dl),Dietary intake,"CSII - bolus insulin (Novolin R, IU)","CSII - basal insulin (Novolin R, IU / H)",Insulin dose - s.c. insulin aspart 70/30,Insulin dose - s.c. insulin glarigine,Insulin dose - s.c. Gansulin R,Insulin dose - s.c. insulin aspart,Insulin dose - s.c. insulin aspart 50/50,Insulin dose - s.c. Humulin 70/30,Insulin dose - s.c. insulin glulisine,Insulin dose - s.c. Novolin 30R,Insulin dose - s.c. Novolin 50R,Insulin dose - s.c. insulin glargine,Insulin dose - s.c. Humulin R,Insulin dose - s.c. insulin degludec,Insulin dose - s.c. Gansulin 40R,Insulin dose - s.c. Novolin R,Insulin dose - s.c. insulin detemir,Non-insulin hypoglycemic agents acarbose,Non-insulin hypoglycemic agents gliquidone,Non-insulin hypoglycemic agents sitagliptin,Non-insulin hypoglycemic agents voglibose,Non-insulin hypoglycemic agents repaglinide,Non-insulin hypoglycemic agents liraglutide,Non-insulin hypoglycemic agents glimepiride,Non-insulin hypoglycemic agents pioglitazone,Non-insulin hypoglycemic agents canagliflozin,Non-insulin hypoglycemic agents dapagliflozin,Non-insulin hypoglycemic agents gliclazide,Non-insulin hypoglycemic agents metformin,Insulin dose - i.v. insulin aspart 70/30,Insulin dose - i.v. insulin glarigine,Insulin dose - i.v. Gansulin R,Insulin dose - i.v. insulin aspart,Insulin dose - i.v. insulin aspart 50/50,Insulin dose - i.v. Humulin 70/30,Insulin dose - i.v. insulin glulisine,Insulin dose - i.v. Novolin 30R,Insulin dose - i.v. Novolin 50R,Insulin dose - i.v. insulin glargine,Insulin dose - i.v. Humulin R,Insulin dose - i.v. insulin degludec,Insulin dose - i.v. Gansulin 40R,Insulin dose - i.v. Novolin R,Insulin dose - i.v. insulin detemir
 ```
 
-# 3 血糖预测模型
+# 3 Blood Glucose Prediction Model
 
