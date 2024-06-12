@@ -1,4 +1,4 @@
-,Date,CGM (mg / dl),CBG (mg / dl),Blood Ketone (mmol / L),Dietary intake,饮食,Insulin dose - s.c.,Non-insulin hypoglycemic agents,CSII - bolus insulin (Novolin R  IU),CSII - basal insulin (Novolin R  IU / H),Insulin dose - i.v.
+,Date,CGM (mg / dl),CBG (mg / dl),Blood Ketone (mmol / L),Dietary intake,饮食,Insulin dose - s.c.,Non-insulin hypoglycemic agents,"CSII - bolus insulin (Novolin R, IU)","CSII - basal insulin (Novolin R, IU / H)",Insulin dose - i.v.
 0,2020-11-02 09:40:00,102.60000000000001,,,,,,,,,
 1,2020-11-02 09:55:00,97.2,104.39999999999999,,,,,,,,
 2,2020-11-02 10:10:00,95.39999999999999,,,,,Humulin 70/30  8 IU,,,,
