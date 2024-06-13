@@ -1,14 +1,14 @@
 [
-    "acarbose",
-    "gliquidone",
-    "sitagliptin",
-    "voglibose",
-    "repaglinide",
-    "liraglutide",
-    "glimepiride",
-    "pioglitazone",
     "canagliflozin",
     "dapagliflozin",
+    "pioglitazone",
+    "repaglinide",
+    "sitagliptin",
+    "glimepiride",
+    "liraglutide",
     "gliclazide",
-    "metformin"
+    "gliquidone",
+    "metformin",
+    "voglibose",
+    "acarbose"
 ]

@@ -20,7 +20,7 @@ def basal_insulin_process(df: DataFrame) -> DataFrame:
     df_attribute = df[attribute_name]
     # print(df[attribute_name])
     new_df_attribute = df_attribute.copy()
-    last_data = None
+    last_data = 0
     for index, row in enumerate(df_attribute):
         if pd.isna(row):
             new_df_attribute[index] = last_data
@@ -76,6 +76,7 @@ def insulin_dose_sc_process(df: DataFrame) -> DataFrame:
         if not pd.isna(row):
             agents = row.split(';')
             for _, agent in enumerate(agents):
+                searched = False
                 for a in agents_map:
                     if re.search(a, agent):
                         ds = re.sub(a, '', agent)
@@ -84,8 +85,11 @@ def insulin_dose_sc_process(df: DataFrame) -> DataFrame:
                         ds = ds.strip()
                         df_insulin_dose[attribute_name + ' ' + a][index] = ds
                         pattren = r'\d+'
+                        searched = True
                         if not re.match(pattren, ds):
-                            print(ds) 
+                            print(attribute_name, '   ', ds, '    ', index)
+                if not searched:
+                    print(agent, 'sc')
 
 
     df = df.drop(columns=[attribute_name])
@@ -100,6 +104,9 @@ def insulin_dose_iv_process(df: DataFrame) -> DataFrame:
         agents_map = json.loads(file.read())
     for a in agents_map:
         df_insulin_attribute.append(attribute_name + ' ' + a)
+    df_insulin_attribute.append(attribute_name + ' ' + 'sodium chloride')
+    df_insulin_attribute.append(attribute_name + ' ' + 'potassium chloride')
+    df_insulin_attribute.append(attribute_name + ' ' + 'glucose')
     df_insulin_dose = pd.DataFrame(columns=df_insulin_attribute, index=range(df.shape[0]))
     df_attribute = df[attribute_name]
     for index, row in enumerate(df_attribute):
@@ -116,16 +123,31 @@ def insulin_dose_iv_process(df: DataFrame) -> DataFrame:
                         df_insulin_dose[attribute_name + ' ' + a][index] = ds
                         pattren = r'\d+'
                         if not re.match(pattren, ds):
-                            print(ds)     
+                            print(attribute_name, '   ', ds, '    ', index)
+                if re.search('sodium chloride', agent):
+                    ds = agent.strip().split(' ')[0][:-2]
+                    # print(ds, agent)
+                    df_insulin_dose[attribute_name + ' sodium chloride'][index] = ds
+                if re.search('potassium chloride', agent):
+                    ds = agent.strip().split(' ')[0]
+                    ds = ds.strip()
+                    # print(ds, agent)
+                    df_insulin_dose[attribute_name + ' sodium chloride'][index] = ds
 
+                if re.search('glucose', agent):
+                    if re.search('sodium chloride', agent):
+                        ds = agent.strip().split(' ')[0][:-2]
+                        # print(ds, agent)
+                        df_insulin_dose[attribute_name + ' glucose'][index] = ds
+                    else:
+                        ds = agent.strip().split(' ')[0]
+                        ds = ds.strip()
+                        # print(ds, agent)
+                        df_insulin_dose[attribute_name + ' glucose'][index] = ds
 
     df = df.drop(columns=[attribute_name])
     df = pd.concat([df, df_insulin_dose], axis=1)
     return df
-
-
-
-
 
 # 非胰岛素药物
 def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
@@ -140,6 +162,8 @@ def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
 
     
     for index, row in enumerate(df_attribute):
+        for a in df_non_insulin_attribute:
+            df_insulin_dose[a][index] = 0
         if not pd.isna(row):
             agents = row.split(' ')
             non_insulins = ''
@@ -151,21 +175,18 @@ def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
                         if re.search(a, agent):
                             non_insulins = a
                             get_insulins = True
+                            # print(index, a)
                 elif i % 3 == 1:
                     if get_insulins == True:
+                        get_insulins = False
                         dose = str(agent.strip())
-                        try:
-                            df_insulin_dose[attribute_name + ' ' + non_insulins][index] = dose
-                        except UnboundLocalError as e:
-                            print(attribute_name + ' ' + insulins)
-                            exit(-1)
+                        df_insulin_dose[attribute_name + ' ' + non_insulins][index] = dose
 
                         pattren = r'\d+'
                         if not re.match(pattren, dose):
-                            print(dose)
+                            print(attribute_name, '   ', dose, '    ', index)
                     
                 else:
-                    insulins = ''
                     continue
 
 
@@ -177,28 +198,64 @@ def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
 def process_CBG_blood_ketone(df:DataFrame) -> DataFrame:
     return df.drop(columns=['CBG (mg / dl)', 'Blood Ketone (mmol / L)'])
 
-def summary_T1DM_process(df:DataFrame) -> DataFrame:
+def summary_process(df:DataFrame) -> DataFrame:
     # 删除列
     cols_delete = [
-        'Diabetic Macrovascular Complications',
-        'Acute Diabetic Complications',
-        'Diabetic Microvascular Complications',
-        'Comorbidities',
-        'Hypoglycemic Agents',  # 药物
-        'Other Agents'          # 药物
+        # 'Diabetic Macrovascular Complications',  # 糖尿病大血管并发症
+        # 'Acute Diabetic Complications',          # 急性糖尿病并发症
+        # 'Diabetic Microvascular Complications',  # 糖尿病微血管并发症
+        # 'Comorbidities',                         # 共病
+        'Hypoglycemic Agents',                   # 药物
+        'Other Agents'                           # 药物
     ]
+
+    df = df.drop(columns=cols_delete)
+    df_copy = df.copy()
     
-
     # 将给列赋值
-    # Alcohol Drinking History (drinker/non-drinker)
-    #   non-drinker
-    #   drinker
+    for index, item in df_copy.iterrows():
+        # Alcohol Drinking History (drinker/non-drinker)
+        #   non-drinker
+        #   drinker
+        if item['Alcohol Drinking History (drinker/non-drinker)'] == 'non-drinker':
+            df.loc[index, 'Alcohol Drinking History (drinker/non-drinker)'] = 0
+        else:
+            df.loc[index, 'Alcohol Drinking History (drinker/non-drinker)'] = 1
 
-    # Type of Diabetes
-    #   T1DM
-    #   T2DM
+        # Type of Diabetes
+        #   T1DM
+        #   T2DM
+        if item['Type of Diabetes'] == 'T1DM':
+            df.loc[index, 'Type of Diabetes'] = 0
+        else:
+            df.loc[index, 'Type of Diabetes'] = 1
 
-    # 
+        if item['Comorbidities'] == 'none':
+            df.loc[index, 'Comorbidities'] = 0
+        else:
+            df.loc[index, 'Comorbidities'] = 1
+
+        if item['Diabetic Macrovascular  Complications'] == 'none':
+            df.loc[index, 'Diabetic Macrovascular  Complications'] = 0
+        else:
+            df.loc[index, 'Diabetic Macrovascular  Complications'] = 1
+
+        if item['Acute Diabetic Complications'] == 'none':
+            df.loc[index, 'Acute Diabetic Complications'] = 0
+        else:
+            df.loc[index, 'Acute Diabetic Complications'] = 1
+
+        if item['Diabetic Microvascular Complications'] == 'none':
+            df.loc[index, 'Diabetic Microvascular Complications'] = 0
+        else:
+            df.loc[index, 'Diabetic Microvascular Complications'] = 1
+
+        if item['Hypoglycemia (yes/no)'] == 'yes':
+            df.loc[index, 'Hypoglycemia (yes/no)'] = 1
+        else:
+            df.loc[index, 'Hypoglycemia (yes/no)'] = 0
+
+    return df
 
 
 if __name__ == '__main__':
@@ -256,10 +313,11 @@ if __name__ == '__main__':
         url = os.path.join('raw-data', summary)
         save_url = os.path.join('processed-data', summary)
         df = read_csv(url)
+        df = summary_process(df)
         save_csv(df, save_url)
+
+
+
+
     
-    #save_csv(df, save_url)
-
-
-            
-
+    

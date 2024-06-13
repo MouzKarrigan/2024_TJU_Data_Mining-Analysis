@@ -21,9 +21,9 @@ for url in urls:
 for agent in agents:
     agents_list.append(agent)
 
-agents_list_sorted = sorted(agents_list, key=len)
+agents_list_sorted = sorted(agents_list, key=len, reverse=True)
 
-agent_str = json.dumps(agents_list, indent=2)
+agent_str = json.dumps(agents_list_sorted, indent=2)
 
 with open('agents_info.json', 'w') as file:
     file.write(agent_str)
