@@ -8,6 +8,18 @@ This paper aims to construct a blood glucose level time series prediction model 
 
 ## 1.2 Current Mainstream Blood Glucose Prediction Methods
 
+### 1.2.1 Nonlinear Autoregressive (NAR) Neural Network
+
+According to research by Alessandro Aliberti and his team ([source](https://ieeexplore.ieee.org/abstract/document/8723121)), they developed an efficient blood glucose prediction method based on the Nonlinear Autoregressive (NAR) neural network. Unlike traditional linear autoregressive models, the `NAR` model is not constrained by distribution and can handle nonlinear features in blood glucose data, such as sudden fluctuations and transient periods. This method uses past blood glucose values as input and employs a multi-layer neural network to compute future glucose levels. The initial design includes an input layer, a hidden layer, and an output layer, trained using the `Levenberg-Marquardt` backpropagation process. To optimize the model, they employed the `Lipschitz` method to determine the optimal number of regressors and used the Optimal Brain Surgeon method for automatic pruning to enhance model compactness and generalization. After experimental validation, they selected a final `NAR` model with 8 regressors to achieve precise and efficient blood glucose level predictions.
+
+### 1.2.2 Long Short-Term Memory (LSTM) and Recurrent Neural Network (RNN)
+
+According to research by Mario Munoz-Organero and his team ([source](https://www.mdpi.com/1424-8220/20/14/3896)), they predicted changes in blood glucose levels using Long Short-Term Memory (LSTM) and Recurrent Neural Network (RNN) models. The model integrates current blood glucose levels, carbohydrate intake, and insulin injections, describing the glucose metabolism process using differential equations including digestion, absorption, insulin-dependent and independent utilization, renal clearance, and endogenous liver production. By training the `RNN` to learn carbohydrate digestion and insulin absorption processes, and the `LSTM` model to learn time patterns of blood glucose levels, combined with processed insulin and carbohydrate signals, they estimated future continuous glucose monitoring (CGM) readings' glucose changes. The model generates predictions based on metabolic dynamics without external inputs, providing early warnings of potential adverse situations and recommending specific measures to avoid them.
+
+### 1.2.3 Autoregressive Moving Average (ARMA) Model
+
+According to research by Ning Ma and his team ([source](https://ceur-ws.org/Vol-2675/paper27.pdf)), their ARMA model combines autoregressive (AR) and moving average (MA) components to capture linear and nonlinear dynamics in time series data. The model first updates input data using sliding window techniques and determines the optimal model order using `AIC` and `BIC`. Subsequently, comparing predicted results with original data yields residual time series. The residuals are then predicted using a BP neural network to enhance the model's adaptation to nonlinear components. Finally, combining `ARMA` model predictions with residual compensation network results through statistical analysis yields the final blood glucose predictions. This framework effectively handles linear and nonlinear features in blood glucose data, enhancing prediction accuracy and stability suitable for real-time blood glucose control and management.
+
 ## 1.3 Team Member
 
 2151617 Zheng Zhi 2152970 Li Jinlin 2154306 Li Zekai 2154314 Zheng Kai
@@ -401,5 +413,15 @@ Due to the computational limitations of the local machine and to save time, we c
 We then used `JupyterLab` to upload the model code constructed in section 3.1 and the preprocessed data from section 2.2.10 to the cloud container instance.
 
 ## 3.3 Model Training Result
+
+# 4 Model Evaluation
+
+## 4.1 Dataset Select
+
+## 4.2 Evaluate Model
+
+## 4.3 Evaluation Result
+
+# 5 Prediction Result & Visualization
 
 
