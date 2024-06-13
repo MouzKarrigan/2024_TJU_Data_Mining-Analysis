@@ -309,11 +309,19 @@ if __name__ == '__main__':
         save_csv(df, save_url)
 
     summarys = ['Shanghai_T1DM_Summary.csv', 'Shanghai_T2DM_Summary.csv']
+    with open('static_attribute.json', 'r') as file:
+        static_attribute = json.load(file)
     for summary in summarys:
         url = os.path.join('raw-data', summary)
         save_url = os.path.join('processed-data', summary)
         df = read_csv(url)
         df = summary_process(df)
+        df.replace('/', float('NaN'), inplace=True)
+        for col in static_attribute:
+            df[col] = pd.to_numeric(df[col])
+            average_value = df[col].mean()
+            df[col].fillna(average_value, inplace=True)
+
         save_csv(df, save_url)
 
 
