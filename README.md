@@ -523,9 +523,28 @@ Evaluate Result: Test loss: 0.693547248840332, Test MAE: 0.6231892704963684
 
 可见评估后的`loss`与`MAE`均处在相对较低的水平，说明`GCM_model.h5`模型的血糖预测能力较强，达到了项目的预期目标。评估结果的可视化如下：
 
-## 4.2 基于全
+## 4.2 基于全数据集预测的评估
 
-## 4.3 
+### 4.2.1 评估过程
 
-# 5 预测结果&可视化
+为了减少极端数据带来的影响，增大测试的数据基数同时更方便生成全览的可视化结果，我们在`model_test.py`中将整个数据集都作为测试集投入之前训练好的`GCM_model.h5`模型中，并将模型给出的预测数据与整个数据集的真实值进行对比与后续的可视化。
 
+```python
+model = TimeModel()
+model.load_model("GCM_model.h5")
+y_pred, y_test = model.predict()
+with open("y_pred.json", "w") as file:
+    y_pred_str = json.dumps(y_pred.tolist(), indent=4)
+    file.write(y_pred_str)
+with open("y_test.json", "w") as file:
+    y_test_str = json.dumps(y_test.tolist(), indent=4)
+    file.write(y_test_str)
+```
+
+### 4.2.2 评估结果&可视化
+
+我们将所有的预测值导出并保存在本地项目的`y_pred.json`中，将所有的真实值导出并保存在本地项目的`y_test.json`中，可视化结果如下：
+
+## 4.3 【LZK补充】
+
+## 4.4 【LZK补充】

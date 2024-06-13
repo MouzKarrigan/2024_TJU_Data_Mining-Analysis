@@ -523,10 +523,28 @@ Evaluate Result: Test loss: 0.693547248840332, Test MAE: 0.6231892704963684
 
 It is evident that the evaluated `loss` and `MAE` are both at relatively low levels, indicating that the blood glucose prediction ability of the `GCM_model.h5` model is strong and has met the project's expected goals. The visualization of the evaluation results is as follows:
 
-## 4.2 
+## 4.2 Evaluation Based on Predictions of the Entire Dataset
 
-## 4.3 
+### 4.2.1 Evaluation Process
 
-# 5 Prediction Result & Visualization
+To minimize the impact of extreme data and increase the test data base while facilitating the generation of comprehensive visualization results, we used the entire dataset as the test set in `model_test.py`, feeding it into the previously trained `GCM_model.h5` model. We then compared the prediction data provided by the model with the actual values of the entire dataset for subsequent visualization.
 
+```python
+model = TimeModel()
+model.load_model("GCM_model.h5")
+y_pred, y_test = model.predict()
+with open("y_pred.json", "w") as file:
+    y_pred_str = json.dumps(y_pred.tolist(), indent=4)
+    file.write(y_pred_str)
+with open("y_test.json", "w") as file:
+    y_test_str = json.dumps(y_test.tolist(), indent=4)
+    file.write(y_test_str)
+```
 
+### 4.2.2 Evaluation Results & Visualization
+
+We exported all predicted values and saved them in `y_pred.json` in the local project. All actual values were exported and saved in `y_test.json` in the local project. The visualization results are as follows:
+
+## 4.3 【LZK补充】
+
+## 4.4 【LZK补充】
