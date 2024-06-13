@@ -66,6 +66,7 @@ def insulin_dose_sc_process(df: DataFrame) -> DataFrame:
     df_insulin_attribute = []
     with open('insulin_agents.json', 'r') as file:
         agents_map = json.loads(file.read())
+        # agents_map = sorted(agents_map, key=len, reverse=True)
     for a in agents_map:
         df_insulin_attribute.append(attribute_name + ' ' + a)
     df_insulin_dose = pd.DataFrame(columns=df_insulin_attribute, index=range(df.shape[0]))
@@ -84,10 +85,11 @@ def insulin_dose_sc_process(df: DataFrame) -> DataFrame:
                         ds = re.sub('IU', '', ds)
                         ds = ds.strip()
                         df_insulin_dose[attribute_name + ' ' + a][index] = ds
-                        pattren = r'\d+'
+                        pattren = r'^[-+]?\d*\.?\d+$'
                         searched = True
                         if not re.match(pattren, ds):
-                            print(attribute_name, '   ', ds, '    ', index)
+                            print(attribute_name + ' ' + a, '   ', ds, '    ', index)
+                        break
                 if not searched:
                     print(agent, 'sc')
 
@@ -102,6 +104,7 @@ def insulin_dose_iv_process(df: DataFrame) -> DataFrame:
     df_insulin_attribute = []
     with open('insulin_agents.json', 'r') as file:
         agents_map = json.loads(file.read())
+        # agents_map = sorted(agents_map, key=len, reverse=True)
     for a in agents_map:
         df_insulin_attribute.append(attribute_name + ' ' + a)
     df_insulin_attribute.append(attribute_name + ' ' + 'sodium chloride')
@@ -121,29 +124,42 @@ def insulin_dose_iv_process(df: DataFrame) -> DataFrame:
                         ds = re.sub('IU', '', ds)
                         ds = ds.strip()
                         df_insulin_dose[attribute_name + ' ' + a][index] = ds
-                        pattren = r'\d+'
+                        pattren = r'^[-+]?\d*\.?\d+$'
                         if not re.match(pattren, ds):
-                            print(attribute_name, '   ', ds, '    ', index)
+                            print(attribute_name + ' ' + a, '   ', ds, '    ', index)
+                        break
                 if re.search('sodium chloride', agent):
                     ds = agent.strip().split(' ')[0][:-2]
                     # print(ds, agent)
                     df_insulin_dose[attribute_name + ' sodium chloride'][index] = ds
+                    pattren = r'^[-+]?\d*\.?\d+$'
+                    if not re.match(pattren, ds):
+                        print(attribute_name + ' ' + 'sodium chloride', '   ', ds, '    ', index)
                 if re.search('potassium chloride', agent):
                     ds = agent.strip().split(' ')[0]
                     ds = ds.strip()
                     # print(ds, agent)
-                    df_insulin_dose[attribute_name + ' sodium chloride'][index] = ds
+                    df_insulin_dose[attribute_name + ' potassium chloride'][index] = ds
+                    pattren = r'^[-+]?\d*\.?\d+$'
+                    if not re.match(pattren, ds):
+                        print(attribute_name + ' ' + 'potassium chloride', '   ', ds, '    ', index)
 
                 if re.search('glucose', agent):
                     if re.search('sodium chloride', agent):
                         ds = agent.strip().split(' ')[0][:-2]
                         # print(ds, agent)
                         df_insulin_dose[attribute_name + ' glucose'][index] = ds
+                        pattren = r'^[-+]?\d*\.?\d+$'
+                        if not re.match(pattren, ds):
+                            print(attribute_name + ' glucose', '   ', ds, '    ', index)
                     else:
                         ds = agent.strip().split(' ')[0]
                         ds = ds.strip()
                         # print(ds, agent)
                         df_insulin_dose[attribute_name + ' glucose'][index] = ds
+                        pattren = r'^[-+]?\d*\.?\d+$'
+                        if not re.match(pattren, ds):
+                            print(attribute_name + ' glucose', '   ', ds, '    ', index)
 
     df = df.drop(columns=[attribute_name])
     df = pd.concat([df, df_insulin_dose], axis=1)
@@ -182,9 +198,9 @@ def non_insulin_hypoglycemic_process(df: DataFrame) -> DataFrame:
                         dose = str(agent.strip())
                         df_insulin_dose[attribute_name + ' ' + non_insulins][index] = dose
 
-                        pattren = r'\d+'
+                        pattren = r'^[-+]?\d*\.?\d+$'
                         if not re.match(pattren, dose):
-                            print(attribute_name, '   ', dose, '    ', index)
+                            print(attribute_name + non_insulins, '   ', dose, '    ', index)
                     
                 else:
                     continue

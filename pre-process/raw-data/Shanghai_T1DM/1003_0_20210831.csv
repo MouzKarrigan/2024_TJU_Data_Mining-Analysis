@@ -21,7 +21,7 @@
 19,2021-08-31 22:28:00,214.2,,,,,,,,,
 20,2021-08-31 22:43:00,210.6,,,,,,,,,
 21,2021-08-31 22:58:00,203.4,207.0,,,,,,,,
-22,2021-08-31 23:13:00,192.6,,,,,,,,,"500ml 5% glucose,  3 IU Novolin R,  10 ml 10% potassium chloride"
+22,2021-08-31 23:13:00,192.6,,,,,,,,,"500 ml 5% glucose,  3 IU Novolin R,  10 ml 10% potassium chloride"
 23,2021-08-31 23:28:00,187.2,,,,,,,,,
 24,2021-08-31 23:43:00,190.8,,,,,,,,,
 25,2021-08-31 23:58:00,189.0,235.79999999999998,,,,,,,,
@@ -34,7 +34,7 @@
 32,2021-09-01 01:43:00,194.4,,,,,,,,,
 33,2021-09-01 01:58:00,199.8,221.4,,,,,,,,
 34,2021-09-01 02:13:00,203.4,,,,,,,,,
-35,2021-09-01 02:28:00,198.0,,,,,,,,,"500ml 5% glucose,  3 IU Novolin R,  10 ml 10% potassium chloride"
+35,2021-09-01 02:28:00,198.0,,,,,,,,,"500 ml 5% glucose,  3 IU Novolin R,  10 ml 10% potassium chloride"
 36,2021-09-01 02:43:00,189.0,,,,,,,,,
 37,2021-09-01 02:58:00,190.8,,,,,,,,,
 38,2021-09-01 03:13:00,198.0,,,,,,,,,
@@ -51,7 +51,7 @@
 49,2021-09-01 05:58:00,208.8,192.6,,,,,,,,
 50,2021-09-01 06:13:00,205.2,,,,,,,,,
 51,2021-09-01 06:28:00,201.6,,,,,,,,,
-52,2021-09-01 06:43:00,207.0,,,,,"Novolin R, 6 IU",,,,"500ml 5% glucose,  3 IU Novolin R,  10 ml 10% potassium chloride"
+52,2021-09-01 06:43:00,207.0,,,,,"Novolin R, 6 IU",,,,"500 ml 5% glucose,  3 IU Novolin R,  10 ml 10% potassium chloride"
 53,2021-09-01 06:58:00,235.8,,,data not available,未记录,,,,,
 54,2021-09-01 07:13:00,277.2,,,,,,,,,
 55,2021-09-01 07:28:00,322.2,,,,,,,,,
@@ -95,9 +95,12 @@
 93,2021-09-01 16:58:00,307.8,,,"Sliced pork with asparagus and fungus 154 g
 Minced pork with cucumber and scallion oil 102 g
 Cabbage 108 g
-Coarse grain 215 g","芦笋木耳肉片	154g
-葱油黄瓜肉糜	102g
-卷心菜	108g
+Coarse grain 215 g","芦笋木耳肉片	154g
+
+葱油黄瓜肉糜	102g
+
+卷心菜	108g
+
 杂粮饭	215g",,,,,
 94,2021-09-01 17:13:00,306.0,,,,,,,,,
 95,2021-09-01 17:28:00,322.2,,,,,,,,,
@@ -156,8 +159,10 @@ Coarse grain 215 g","芦笋木耳肉片	154g
 148,2021-09-02 06:43:00,171.0,,,,,,,,,
 149,2021-09-02 06:58:00,176.4,,,"Egg 61 g
 Coarse grain steamed bread 136 g
-Boiled vegetable 111 g","鸡蛋	61g
-杂粮馒头	136g
+Boiled vegetable 111 g","鸡蛋	61g
+
+杂粮馒头	136g
+
 水煮菜	111g",,,,,
 150,2021-09-02 07:13:00,178.2,,,,,,,,,
 151,2021-09-02 07:28:00,187.2,,,,,,,,,
@@ -177,9 +182,12 @@ Boiled vegetable 111 g","鸡蛋	61g
 165,2021-09-02 10:58:00,127.8,,,"Braised duck slices with green pepper and onion 135 g
 Minced pork with cowpea 111 g
 Vegetable 114 g
-Coarse grain 266 g","青椒洋葱烧鸭片	135g
-肉糜豇豆	111g
-青菜	114g
+Coarse grain 266 g","青椒洋葱烧鸭片	135g
+
+肉糜豇豆	111g
+
+青菜	114g
+
 杂粮饭	266g",,,,,
 166,2021-09-02 11:13:00,106.2,,,,,,,,,
 167,2021-09-02 11:28:00,104.4,,,,,,,,,
@@ -207,9 +215,12 @@ Coarse grain 266 g","青椒洋葱烧鸭片	135g
 189,2021-09-02 16:58:00,129.6,,,"Sliced pork with snow pea and yam 135 g
 Shredded pork with broccoli 114 g
 Shredded Chinese cabbage and carrot 107 g
-Coarse grain 271 g","荷兰豆山药肉片	135g
-西兰花肉丝	114g
-白菜胡卜丝	107g
+Coarse grain 271 g","荷兰豆山药肉片	135g
+
+西兰花肉丝	114g
+
+白菜胡卜丝	107g
+
 杂粮饭	271g",,,,,
 190,2021-09-02 17:13:00,104.4,,,,,,,,,
 191,2021-09-02 17:28:00,95.4,,,,,,,,,
@@ -269,8 +280,10 @@ Coarse grain 271 g","荷兰豆山药肉片	135g
 245,2021-09-03 06:58:00,124.2,,,,,,,,,
 246,2021-09-03 07:13:00,133.2,,,"Egg 69 g
 Coarse grain steamed bread 136 g
-Boiled vegetable 107 g","鸡蛋	69g
-杂粮馒头	136g
+Boiled vegetable 107 g","鸡蛋	69g
+
+杂粮馒头	136g
+
 水煮菜	107g",,,,,
 247,2021-09-03 07:28:00,154.8,,,,,,,,,
 248,2021-09-03 07:43:00,185.4,,,,,,,,,
@@ -289,9 +302,12 @@ Boiled vegetable 107 g","鸡蛋	69g
 261,2021-09-03 10:58:00,93.6,111.60000000000001,,"Stir-fried fish slices with tomatoes 141 g
 Minced meat with yam and corn 101 g
 Amaranthus 94 g
-Coarse grain 286 g","番茄炒鱼片	141g
-山药玉米肉糜	101g
-米苋	94g
+Coarse grain 286 g","番茄炒鱼片	141g
+
+山药玉米肉糜	101g
+
+米苋	94g
+
 杂粮饭	286g",,,,,
 262,2021-09-03 11:13:00,95.4,,,,,,,,,
 263,2021-09-03 11:28:00,120.6,,,,,,,,,
@@ -319,9 +335,12 @@ Coarse grain 286 g","番茄炒鱼片	141g
 285,2021-09-03 16:58:00,232.2,,,"Braised eggs and small meat balls 169 g
 Shredded pork with lettuce and fungus 117 g
 Cabbage and carrot 120 g
-Coarse grain 289 g","南汇焖蛋小肉圆	169g
-莴笋木耳肉丝	117g
-牛心菜胡卜	120g
+Coarse grain 289 g","南汇焖蛋小肉圆	169g
+
+莴笋木耳肉丝	117g
+
+牛心菜胡卜	120g
+
 杂粮饭	289g",,,,,
 286,2021-09-03 17:13:00,223.2,,,,,,,,,
 287,2021-09-03 17:28:00,228.6,,,,,,,,,
@@ -380,8 +399,10 @@ Coarse grain 289 g","南汇焖蛋小肉圆	169g
 340,2021-09-04 06:43:00,104.4,,,,,,,,,
 341,2021-09-04 06:58:00,93.6,,,"Egg 62 g
 Coarse grain steamed bread 140g
-Boiled vegetable 103 g","鸡蛋	62g
-杂粮馒头	140g
+Boiled vegetable 103 g","鸡蛋	62g
+
+杂粮馒头	140g
+
 水煮菜	103g",,,,,
 342,2021-09-04 07:13:00,84.6,,,,,,,,,
 343,2021-09-04 07:28:00,109.8,,,,,,,,,
@@ -401,9 +422,12 @@ Boiled vegetable 103 g","鸡蛋	62g
 357,2021-09-04 10:58:00,109.8,115.2,,"Chicken with lotus root and celery 149 g
 Fried sliced pork 115 g
 Green pepper and green bean sprouts 111g
-Coarse grain 263 g","藕片美芹仔鸡	149g
-烂糊肉丝	115g
-绿豆芽青椒	111g
+Coarse grain 263 g","藕片美芹仔鸡	149g
+
+烂糊肉丝	115g
+
+绿豆芽青椒	111g
+
 杂粮饭	263g",,,,,
 358,2021-09-04 11:13:00,127.8,,,,,,,,,
 359,2021-09-04 11:28:00,156.6,,,,,,,,,
@@ -431,9 +455,12 @@ Coarse grain 263 g","藕片美芹仔鸡	149g
 381,2021-09-04 16:58:00,187.2,,,"Sliced pork with bitter melon 159 g
 Shredded pork with green pepper and water bamboo 134 g
 Vegetable 112 g
-Rice 261 g","苦瓜肉片	159g
-青椒茭白肉丝	134g
-青菜	112g
+Rice 261 g","苦瓜肉片	159g
+
+青椒茭白肉丝	134g
+
+青菜	112g
+
 米饭	261g",,,,,
 382,2021-09-04 17:13:00,180.0,,,,,,,,,
 383,2021-09-04 17:28:00,185.4,,,,,,,,,
@@ -492,9 +519,12 @@ Rice 261 g","苦瓜肉片	159g
 436,2021-09-05 06:43:00,109.8,,,,,,,,,
 437,2021-09-05 06:58:00,108.0,,,"Egg 62 g
 Coarse grain steamed bread 140 g
-Boiled vegetable 103 g","鸡蛋	62g
-杂粮馒头	140g
-水煮菜	103g
+Boiled vegetable 103 g","鸡蛋	62g
+
+杂粮馒头	140g
+
+水煮菜	103g
+
 ",,,,,
 438,2021-09-05 07:13:00,117.0,,,,,,,,,
 439,2021-09-05 07:28:00,142.2,,,,,,,,,
@@ -514,9 +544,12 @@ Boiled vegetable 103 g","鸡蛋	62g
 453,2021-09-05 10:58:00,91.8,120.60000000000001,,"Grilled pork ribs with scallions 115 g
 Minced pork with white gourd 132 g
 Sweet potato leaves 103 g
-Coarse grain 275 g","葱烤大排	115g
-肉糜冬瓜	132g
-地瓜叶	103g
+Coarse grain 275 g","葱烤大排	115g
+
+肉糜冬瓜	132g
+
+地瓜叶	103g
+
 杂粮饭	275g",,,,,
 454,2021-09-05 11:13:00,104.4,,,,,,,,,
 455,2021-09-05 11:28:00,133.2,,,,,,,,,
@@ -544,9 +577,12 @@ Coarse grain 275 g","葱烤大排	115g
 477,2021-09-05 16:58:00,171.0,,,"Sliced pork with zucchini  178 g
 Shredded pork with cucumber and carrot 112 g
 Radish 118 g
-Coarse grain 277 g","西葫芦肉片	178g
-黄瓜胡卜肉丝	112g
-萝卜	118g
+Coarse grain 277 g","西葫芦肉片	178g
+
+黄瓜胡卜肉丝	112g
+
+萝卜	118g
+
 杂粮饭	277g",,,,,
 478,2021-09-05 17:13:00,176.4,,,,,,,,,
 479,2021-09-05 17:28:00,198.0,,,,,,,,,
@@ -606,9 +642,12 @@ Coarse grain 277 g","西葫芦肉片	178g
 533,2021-09-06 06:58:00,151.2,,,,,,,,,
 534,2021-09-06 07:13:00,135.0,,,"Egg 62 g
 Coarse grain steamed bread 137 g
-Boiled vegetable 111 g","鸡蛋	62g
-杂粮馒头	137g
-水煮菜	111g
+Boiled vegetable 111 g","鸡蛋	62g
+
+杂粮馒头	137g
+
+水煮菜	111g
+
 ",,,,,
 535,2021-09-06 07:28:00,127.8,,,,,,,,,
 536,2021-09-06 07:43:00,145.8,,,,,,,,,
@@ -627,9 +666,12 @@ Boiled vegetable 111 g","鸡蛋	62g
 549,2021-09-06 10:58:00,181.8,237.6,,"Fried duck breast with beech mushroom 128 g
 Shredded pork with gourd and tomato  125 g
 Lettuce 96 g
-Coarse grain 289 g","蟹味菇炒鸭脯肉	128g
-夜开花番茄肉丝	125g
-生菜	96g
+Coarse grain 289 g","蟹味菇炒鸭脯肉	128g
+
+夜开花番茄肉丝	125g
+
+生菜	96g
+
 杂粮饭	289g",,,,,
 550,2021-09-06 11:13:00,178.2,,,,,,,,,
 551,2021-09-06 11:28:00,187.2,,,,,,,,,
@@ -657,9 +699,12 @@ Coarse grain 289 g","蟹味菇炒鸭脯肉	128g
 573,2021-09-06 16:58:00,88.2,,,"Shredded pork with green pepper and beech mushroom 137 g
 Minced pork with towel gourd 157 g
 Chinese cabbage and carrot 121 g
-Coarse grain 267 g","青椒白玉菇肉丝	137g
-丝瓜肉糜	157g
-大白菜胡卜	121g
+Coarse grain 267 g","青椒白玉菇肉丝	137g
+
+丝瓜肉糜	157g
+
+大白菜胡卜	121g
+
 杂粮饭	267g",,,,,
 574,2021-09-06 17:13:00,79.2,,,,,,,,,
 575,2021-09-06 17:28:00,93.6,,,,,,,,,
@@ -719,9 +764,12 @@ Coarse grain 267 g","青椒白玉菇肉丝	137g
 629,2021-09-07 06:58:00,82.8,,,,,,,,,
 630,2021-09-07 07:13:00,73.8,,,"Egg 69 g
 Coarse grain steamed bread 140 g
-Boiled vegetable 103 g","鸡蛋	69g
-杂粮馒头	140g
-水煮菜	103g
+Boiled vegetable 103 g","鸡蛋	69g
+
+杂粮馒头	140g
+
+水煮菜	103g
+
 ",,,,,
 631,2021-09-07 07:28:00,73.8,,,,,,,,,
 632,2021-09-07 07:43:00,97.2,,,,,,,,,
@@ -1149,9 +1197,12 @@ Boiled vegetable 103 g","鸡蛋	69g
 1054,2021-09-11 17:13:00,120.6,,,"Fried pork slices with Bergamot melon 160 g
 Shredded pork with lettuce 139 g
 Cabbage 108 g
-Coarse grain 218 g","佛手瓜炒肉片	160g
-莴笋丝肉丝	139g
-卷心菜	108g
+Coarse grain 218 g","佛手瓜炒肉片	160g
+
+莴笋丝肉丝	139g
+
+卷心菜	108g
+
 杂粮饭	218g",,,,,
 1055,2021-09-11 17:28:00,124.2,,,,,,,,,
 1056,2021-09-11 17:43:00,117.0,,,,,,,,,
@@ -1210,9 +1261,12 @@ Coarse grain 218 g","佛手瓜炒肉片	160g
 1109,2021-09-12 06:58:00,115.2,,,,,,acarbose 50 mg,,,
 1110,2021-09-12 07:13:00,104.4,,,"Egg 58 g
 Coarse grain steamed bread 140 g
-Boiled vegetable 111 g","鸡蛋	58g
-杂粮馒头	140g
-水煮菜	111g
+Boiled vegetable 111 g","鸡蛋	58g
+
+杂粮馒头	140g
+
+水煮菜	111g
+
 ",,,,,
 1111,2021-09-12 07:28:00,104.4,,,,,,,,,
 1112,2021-09-12 07:43:00,118.8,,,,,,,,,
@@ -1231,9 +1285,12 @@ Boiled vegetable 111 g","鸡蛋	58g
 1125,2021-09-12 10:58:00,129.6,151.20000000000002,,"Sliced pork with king oyster mushroom and fungus 149 g
 Minced pork with potato and cabbage  124 g
 Sweet potato leaves 112 g
-Coarse grain 226 g","杏鲍菇木耳肉片	149g
-番茄卷心菜肉糜	124g
-地瓜叶	112g
+Coarse grain 226 g","杏鲍菇木耳肉片	149g
+
+番茄卷心菜肉糜	124g
+
+地瓜叶	112g
+
 杂粮饭	226g",,,,,
 1126,2021-09-12 11:13:00,131.4,,,,,,,,,
 1127,2021-09-12 11:28:00,145.8,,,,,,,,,
@@ -1262,10 +1319,14 @@ Coarse grain 226 g","杏鲍菇木耳肉片	149g
 1150,2021-09-12 17:13:00,100.8,,,"Sliced meat with zucchini 149 g
 Minced pork with white gourd and carrot 127 g
 Hangzhou cabbage 106 g
-Coarse grain 226 g","西葫芦肉片	149g
-冬瓜胡卜肉糜	127g
-杭白菜	106g
-杂粮饭	226g
+Coarse grain 226 g","西葫芦肉片	149g
+
+冬瓜胡卜肉糜	127g
+
+杭白菜	106g
+
+杂粮饭	226g
+
 ",,,,,
 1151,2021-09-12 17:28:00,100.8,,,,,,,,,
 1152,2021-09-12 17:43:00,109.8,,,,,,,,,
@@ -1324,8 +1385,10 @@ Coarse grain 226 g","西葫芦肉片	149g
 1205,2021-09-13 06:58:00,124.2,,,,,,acarbose 50 mg,,,
 1206,2021-09-13 07:13:00,120.6,,,"Egg 61 g
 Coarse grain steamed bread 140 g
-Boiled vegetable 103 g","鸡蛋	61g
-杂粮馒头	140g
+Boiled vegetable 103 g","鸡蛋	61g
+
+杂粮馒头	140g
+
 水煮菜	103g",,,,,
 1207,2021-09-13 07:28:00,122.4,,,,,,,,,
 1208,2021-09-13 07:43:00,140.4,,,,,,,,,
@@ -1344,9 +1407,12 @@ Boiled vegetable 103 g","鸡蛋	61g
 1221,2021-09-13 10:58:00,91.8,88.2,,"Braised pork chops with radish 153g
 Minced meat with eggplant 138 g
 Vegetable 116 g
-Coarse grain 222 g","萝卜烩小排	153g
-肉糜茄子	138g
-青菜	116g
+Coarse grain 222 g","萝卜烩小排	153g
+
+肉糜茄子	138g
+
+青菜	116g
+
 杂粮饭	222g",,,,,
 1222,2021-09-13 11:13:00,97.2,,,,,,,,,
 1223,2021-09-13 11:28:00,118.8,,,,,,,,,
@@ -1374,9 +1440,12 @@ Coarse grain 222 g","萝卜烩小排	153g
 1245,2021-09-13 16:58:00,106.2,,,"Steamed meatballs with yam  95 g
 Shredded pork with green pepper and carrot 118 g
 Hangzhou cabbage 111 g
-Coarse grain 239 g","清蒸山药肉圆	95g
-青椒胡卜肉丝	118g
-杭白菜	111g
+Coarse grain 239 g","清蒸山药肉圆	95g
+
+青椒胡卜肉丝	118g
+
+杭白菜	111g
+
 杂粮饭	239g",,acarbose 50 mg,,,
 1246,2021-09-13 17:13:00,100.8,,,,,,,,,
 1247,2021-09-13 17:28:00,102.6,,,,,,,,,
@@ -1436,9 +1505,12 @@ Coarse grain 239 g","清蒸山药肉圆	95g
 1301,2021-09-14 06:58:00,120.6,,,,,,acarbose 50 mg,,,
 1302,2021-09-14 07:13:00,129.6,,,"Egg 58 g
 Coarse grain steamed bread 137 g
-Boiled vegetable 100 g","鸡蛋	58g
-杂粮馒头	137g
-水煮菜	100g
+Boiled vegetable 100 g","鸡蛋	58g
+
+杂粮馒头	137g
+
+水煮菜	100g
+
 ",,,,,
 1303,2021-09-14 07:28:00,151.2,,,,,,,,,
 1304,2021-09-14 07:43:00,172.8,,,,,,,,,
@@ -1457,9 +1529,12 @@ Boiled vegetable 100 g","鸡蛋	58g
 1317,2021-09-14 10:58:00,88.2,100.8,,"Fried pork slices with celery and ginkgo 149 g
 Shredded pork with tomato and cabbage  116 g
 Lettuce 106 g
-Coarse grain 232 g","美芹白果炒肉片	149g
-番茄卷心菜肉丝	116g
-生菜	106g
+Coarse grain 232 g","美芹白果炒肉片	149g
+
+番茄卷心菜肉丝	116g
+
+生菜	106g
+
 杂粮饭	232g",,,,,
 1318,2021-09-14 11:13:00,91.8,,,,,,,,,
 1319,2021-09-14 11:28:00,108.0,,,,,,,,,

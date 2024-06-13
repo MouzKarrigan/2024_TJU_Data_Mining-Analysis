@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Flatten, Concatenate
-from tensorflow_addons.layers import TCN
+from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Conv1D, GlobalAveragePooling1D
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -12,12 +12,17 @@ import json
 
 
 class TimeModel:
-    def __init__(self):
+    def __init__(self, num_units=64, model_path="GCM_model.h5"):
+        self.scaler_ts_X = StandardScaler()
+        self.scaler_static_X = StandardScaler()
+        self.scaler_y = StandardScaler()
+        self.num_units  = num_units
+        self.model_save_path = model_path
         with open('pre-process/time_serise_attribute.json', 'r') as file:
             time_serise_attribute = json.load(file)
         with open('pre-process/static_attribute.json', 'r') as file:
             static_attribute = json.load(file)
-        tmp_folder = 'tmp_data'
+        tmp_folder = 'pre-process/tmp_data'
         tmp_files = os.listdir(tmp_folder)
 
         all_data = []
@@ -44,24 +49,21 @@ class TimeModel:
         targets = data[target_attribute].values
 
         def create_sequences(features, targets, static_features, time_steps=10):
-            ts_X,  y = [], []
+            ts_X, static_X, y = [], [], []
             for i in range(len(features) - time_steps):
                 ts_X.append(features[i:i+time_steps])
-                static_X = static_features[i]
+                static_X.append(static_features[i])
                 y.append(targets[i+time_steps])
             return np.array(ts_X), np.array(static_X), np.array(y)
         
         ts_X, static_X, y = create_sequences(time_series_features, targets, static_features)
 
         # 数据标准化
-        scaler_ts_X = StandardScaler()
-        ts_X = scaler_ts_X.fit_transform(ts_X.reshape(-1, ts_X.shape[-1])).reshape(ts_X.shape)
+        ts_X = self.scaler_ts_X.fit_transform(ts_X.reshape(-1, ts_X.shape[-1])).reshape(ts_X.shape)
 
-        scaler_static_X = StandardScaler()
-        static_X = scaler_static_X.fit_transform(static_X)
+        static_X = self.scaler_static_X.fit_transform(static_X)
 
-        scaler_y = StandardScaler()
-        y = scaler_y.fit_transform(y)
+        y = self.scaler_y.fit_transform(y)
 
         self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y_train, self.y_test = train_test_split(
             ts_X, static_X, y, test_size=0.2, random_state=42
@@ -82,7 +84,8 @@ class TimeModel:
 
         # 时序数据输入
         ts_input = Input(shape=(ts_X_train.shape[1], ts_X_train.shape[2]))
-        ts_embedding = TCN(64)(ts_input)
+        # ts_embedding = TCN(64)(ts_input)
+        ts_embedding = LSTM(self.num_units)(ts_input)
         ts_embedding = Flatten()(ts_embedding)
 
         # 静态特征输入
@@ -113,10 +116,13 @@ class TimeModel:
     def train_model(self, epochs=50, batch_size=32, validation_split=0.2):
         history = self.model.fit([self.ts_X_train, self.static_X_train], self.y_train,
                                  epochs=epochs, batch_size=batch_size, validation_split=validation_split)
+        self.model.save(self.model_save_path)  # 保存模型
+        return history
         
     def evaluate_model(self):
         test_loss, test_mae = self.model.evaluate([self.ts_X_test, self.static_X_test], self.y_test)
         print(f'Test loss: {test_loss}, Test MAE: {test_mae}')
+        return f'Test loss: {test_loss}, Test MAE: {test_mae}'
 
 
     def predict(self):
@@ -125,12 +131,24 @@ class TimeModel:
         y_test = self.scaler_y.inverse_transform(self.y_test)
         return y_pred, y_test
     
+    
 if __name__ == "__main__":
     data_dir = 'path_to_your_data_directory'
-    model = TimeModel(time_steps=10)
+    model = TimeModel()
     model.build_model()
-    model.train_model()
-    model.evaluate_model()
+    history = model.train_model()
+    evaluate_result = model.evaluate_model()
     y_pred, y_test = model.predict()
+    
+    with open("model_info.log", 'w') as file:
+        # 打印每个epoch的loss和mae
+        for epoch, (loss, mae) in enumerate(zip(history.history['loss'], history.history['mean_absolute_error'])):
+            print(f"Epoch {epoch + 1}: Loss = {loss}, MAE = {mae}")
+            file.write(f"Epoch {epoch + 1}: Loss = {loss}, MAE = {mae}\n")
+        file.write("Evaluate Result: " + evaluate_result + '\n')
+
+    # 打印预测效果
+    print(f'Predictions: {y_pred[:5]}')  # 仅显示前5个预测值
+    print(f'Actual: {y_test[:5]}')  # 仅显示前5个真实值
 
 
