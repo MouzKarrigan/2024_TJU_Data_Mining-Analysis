@@ -410,17 +410,122 @@ Due to the computational limitations of the local machine and to save time, we c
 
 ![pic1](/pic/1.png)
 
-We then used `JupyterLab` to upload the model code constructed in section 3.1 and the preprocessed data from section 2.2.10 to the cloud container instance.
+We then used `JupyterLab` to upload the model code constructed in section 3.1 and the preprocessed data from section 2.2.10 to the cloud container instance. Next, install the `sklearn` and `pandas` libraries required for the model on the cloud server. Since the server configuration already includes the `Tensorflow` library, there is no need to install it.
+
+![pic2](/pic/2.png)
+
+![pic3](/pic/3.png)
 
 ## 3.3 Model Training Result
 
+We split a large proportion of the training set from all preprocessed and format-standardized data using the `train_test_split` function from the `sklearn` library, and used these training sets to train the aforementioned models.
+
+```python
+from sklearn.model_selection import train_test_split
+
+self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y_train, self.y_test = train_test_split(
+            ts_X, static_X, y, test_size=0.2, random_state=42)
+```
+
+After 5-7 rounds of fine-tuning and approximately twenty minutes of training on the cloud service following each fine-tuning, we obtained a model capable of effectively predicting subsequent blood glucose concentration levels based on time-series data. We named this model `GCM_model.h5`, exported it, and saved it locally for subsequent predictions and performance evaluations.
+
 # 4 Model Evaluation
 
-## 4.1 Dataset Select
+## 4.1 Evaluation Based on Mean Absolute Error (MAE)
 
-## 4.2 Evaluate Model
+### 4.1.1 Evaluation Model Introduction
 
-## 4.3 Evaluation Result
+Mean Absolute Error (MAE) is a commonly used method for measuring the error of prediction models. `MAE` calculates the average of the absolute differences between predicted and actual values. The advantage of `MAE` is that it is simple and easy to understand, and it is not sensitive to outliers. Since `MAE` simply calculates the average of absolute errors, the contribution of each error is linear, making `MAE` more reflective of the actual level of prediction error. The smaller the `MAE` value, the stronger the predictive ability of the model.
+
+### 4.1.2 Evaluation Process
+
+We still used the `train_test_split` function from the `sklearn` library to split a small proportion of the test set and fed the test set into the already trained blood glucose concentration prediction model `GCM_model.h5`. We designed a method to use the MAE model to evaluate the error level between the blood glucose predictions made by `GCM_model.h5` based on the test set and the actual blood glucose values of the test set.
+
+```python
+def evaluate_model(self):
+        test_loss, test_mae = self.model.evaluate([self.ts_X_test, self.static_X_test], self.y_test)
+        print(f'Test loss: {test_loss}, Test MAE: {test_mae}')
+        return f'Test loss: {test_loss}, Test MAE: {test_mae}'
+```
+
+We recorded the `loss` and `mae` of each epoch prediction compared to the actual values in `model_info.log` and exported and saved them for subsequent visual evaluation of the model's predictive ability. We also output the first 5 predicted values and the first 5 actual values directly in the console to quickly identify any serious errors in the model and decide whether to continue tuning.
+
+```python
+with open("model_info.log", 'w') as file:
+        # Print the loss and mae of each epoch
+        for epoch, (loss, mae) in enumerate(zip(history.history['loss'], history.history['mean_absolute_error'])):
+            print(f"Epoch {epoch + 1}: Loss = {loss}, MAE = {mae}")
+            file.write(f"Epoch {epoch + 1}: Loss = {loss}, MAE = {mae}\n")
+        file.write("Evaluate Result: " + evaluate_result + '\n')
+
+# Print prediction results
+print(f'Predictions: {y_pred[:5]}')  # Display only the first 5 predictions
+print(f'Actual: {y_test[:5]}')  # Display only the first 5 actual values
+```
+
+### 4.1.3 Evaluation Results & Visualization
+
+The MAE-based evaluation results of this model saved in `model_info.log` are as follows:
+
+```log
+Epoch 1: Loss = 0.7274188995361328, MAE = 0.6401249170303345
+Epoch 2: Loss = 0.7078902721405029, MAE = 0.6293964385986328
+Epoch 3: Loss = 0.7053763270378113, MAE = 0.6282157897949219
+Epoch 4: Loss = 0.7044493556022644, MAE = 0.627899169921875
+Epoch 5: Loss = 0.703209638595581, MAE = 0.6272200345993042
+Epoch 6: Loss = 0.7025228142738342, MAE = 0.6266223788261414
+Epoch 7: Loss = 0.7013389468193054, MAE = 0.62616366147995
+Epoch 8: Loss = 0.7012447118759155, MAE = 0.626340925693512
+Epoch 9: Loss = 0.7008843421936035, MAE = 0.6263161897659302
+Epoch 10: Loss = 0.7001814842224121, MAE = 0.6258469820022583
+Epoch 11: Loss = 0.7006029486656189, MAE = 0.6260581016540527
+Epoch 12: Loss = 0.700245201587677, MAE = 0.6259238123893738
+Epoch 13: Loss = 0.6998435258865356, MAE = 0.6255122423171997
+Epoch 14: Loss = 0.6997337341308594, MAE = 0.6253139972686768
+Epoch 15: Loss = 0.6997116208076477, MAE = 0.6251299977302551
+Epoch 16: Loss = 0.699403703212738, MAE = 0.6254212856292725
+Epoch 17: Loss = 0.6990288496017456, MAE = 0.6251856088638306
+Epoch 18: Loss = 0.6989213824272156, MAE = 0.625009298324585
+Epoch 19: Loss = 0.6991170048713684, MAE = 0.6253772974014282
+Epoch 20: Loss = 0.6987175941467285, MAE = 0.6247353553771973
+Epoch 21: Loss = 0.6989221572875977, MAE = 0.6247790455818176
+Epoch 22: Loss = 0.6989554762840271, MAE = 0.6252496242523193
+Epoch 23: Loss = 0.6984623074531555, MAE = 0.6249624490737915
+Epoch 24: Loss = 0.6992499232292175, MAE = 0.6252095103263855
+Epoch 25: Loss = 0.698403000831604, MAE = 0.6248780488967896
+Epoch 26: Loss = 0.6982405781745911, MAE = 0.6245723962783813
+Epoch 27: Loss = 0.6988308429718018, MAE = 0.625002384185791
+Epoch 28: Loss = 0.6988797187805176, MAE = 0.6248522400856018
+Epoch 29: Loss = 0.6981606483459473, MAE = 0.6249082088470459
+Epoch 30: Loss = 0.6980540752410889, MAE = 0.6245489716529846
+Epoch 31: Loss = 0.6981762051582336, MAE = 0.6246173977851868
+Epoch 32: Loss = 0.6982497572898865, MAE = 0.6247618198394775
+Epoch 33: Loss = 0.6980252265930176, MAE = 0.6249825358390808
+Epoch 34: Loss = 0.6979789137840271, MAE = 0.6246053576469421
+Epoch 35: Loss = 0.6980347037315369, MAE = 0.6248635053634644
+Epoch 36: Loss = 0.6977786421775818, MAE = 0.6243159174919128
+Epoch 37: Loss = 0.6980361342430115, MAE = 0.6247730851173401
+Epoch 38: Loss = 0.6981427073478699, MAE = 0.6246519088745117
+Epoch 39: Loss = 0.6977683305740356, MAE = 0.6245717406272888
+Epoch 40: Loss = 0.6975683569908142, MAE = 0.6246529817581177
+Epoch 41: Loss = 0.697871744632721, MAE = 0.6247150301933289
+Epoch 42: Loss = 0.6980435252189636, MAE = 0.6247749924659729
+Epoch 43: Loss = 0.6977730393409729, MAE = 0.6246309876441956
+Epoch 44: Loss = 0.6976891756057739, MAE = 0.6243056654930115
+Epoch 45: Loss = 0.6978077292442322, MAE = 0.6247830986976624
+Epoch 46: Loss = 0.6978294849395752, MAE = 0.624419093132019
+Epoch 47: Loss = 0.6976174712181091, MAE = 0.6245185732841492
+Epoch 48: Loss = 0.6974222660064697, MAE = 0.6245062947273254
+Epoch 49: Loss = 0.6975627541542053, MAE = 0.6245120167732239
+Epoch 50: Loss = 0.6978248953819275, MAE = 0.6243880391120911
+Evaluate Result: Test loss: 0.693547248840332, Test MAE: 0.6231892704963684
+```
+
+It is evident that the evaluated `loss` and `MAE` are both at relatively low levels, indicating that the blood glucose prediction ability of the `GCM_model.h5` model is strong and has met the project's expected goals. The visualization of the evaluation results is as follows:
+
+## 4.2 
+
+## 4.3 
 
 # 5 Prediction Result & Visualization
 

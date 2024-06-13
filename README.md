@@ -410,17 +410,122 @@ self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y
 
 ![pic1](/pic/1.png)
 
-之后我们采用`JupyterLab`将3.1中的已构建的模型代码与2.2.10中预处理产出的数据上传至云端容器实例中。
+之后我们采用`JupyterLab`将3.1中的已构建的模型代码与2.2.10中预处理产出的数据上传至云端容器实例中。下一步，在云端服务器中安装模型所需的`sklearn`库和`pandas`库，由于服务器配置时自带`Tensorflow`库因此不用安装。
 
-## 3.3 模型训练结果
+![pic2](/pic/2.png)
 
-# 4 模型效果验证
+![pic3](/pic/3.png)
 
-## 4.1 测试集选取
+## 3.3 模型训练
 
-## 4.2 验证模型
+我们在所有经过预处理和格式标准化的数据中，通过`sklearn`库中自带的`train_test_split`划分了大比例的训练集，并用这些训练集对上述模型进行训练。
 
-## 4.3 验证结果
+```python
+from sklearn.model_selection import train_test_split
+
+self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y_train, self.y_test = train_test_split(
+            ts_X, static_X, y, test_size=0.2, random_state=42)
+```
+
+在经过5-7次的微调与每次微调后在云端服务的二十分钟左右训练后，我们得到了可以有效根据时序数据预测后续血糖浓度水平的模型，将其命名为`GCM_model.h5`后导出并保存至本地，以便后续的预测以及能力评估。
+
+# 4 模型预测能力评估
+
+## 4.1 基于均值绝对误差（MAE）评估
+
+### 4.1.1 评估模型介绍
+
+均值绝对误差（MAE）是一种常用的衡量预测模型误差的方法。`MAE`计算预测值与实际值之间的绝对差异的平均值。`MAE`的优点在于它简单易懂，且对异常值不敏感。由于`MAE`只是简单地计算绝对误差的平均值，因此每个误差的贡献是线性的，这使得`MAE`更能反映实际的预测误差水平。`MAE`值越小，表明模型的预测能力越强。
+
+### 4.1.2 评估过程
+
+我们仍然通过`sklearn`库中自带的`train_test_split`划分了小比例的测试集，并将测试集投入已经训练好的血糖浓度预测模型`GCM_model.h5`中，并设计了方法，利用`MAE`模型评估`GCM_model.h5`根据测试集做出的血糖预测值与测试集的血糖实际值之间的误差水平。
+
+```python
+def evaluate_model(self):
+        test_loss, test_mae = self.model.evaluate([self.ts_X_test, self.static_X_test], self.y_test)
+        print(f'Test loss: {test_loss}, Test MAE: {test_mae}')
+        return f'Test loss: {test_loss}, Test MAE: {test_mae}'
+```
+
+我们将每个`epoch`预测值相比于真实值的`loss`和`mae`记录在`model_info.log`中并导出保存，方便后续直观评估模型的预测能力并进行可视化；同时直接在控制台中输出前`5`个预测值与前`5`个真实值，方便及时发现模型的严重错误并决定是否继续进行调优。
+
+```python
+with open("model_info.log", 'w') as file:
+        # 打印每个epoch的loss和mae
+        for epoch, (loss, mae) in enumerate(zip(history.history['loss'], history.history['mean_absolute_error'])):
+            print(f"Epoch {epoch + 1}: Loss = {loss}, MAE = {mae}")
+            file.write(f"Epoch {epoch + 1}: Loss = {loss}, MAE = {mae}\n")
+        file.write("Evaluate Result: " + evaluate_result + '\n')
+
+# 打印预测效果
+print(f'Predictions: {y_pred[:5]}')  # 仅显示前5个预测值
+print(f'Actual: {y_test[:5]}')  # 仅显示前5个真实值
+```
+
+### 4.1.3 评估结果&可视化
+
+保存在`model_info.log`中的对本模型的基于均值绝对误差（MAE）的评估结果如下：
+
+```log
+Epoch 1: Loss = 0.7274188995361328, MAE = 0.6401249170303345
+Epoch 2: Loss = 0.7078902721405029, MAE = 0.6293964385986328
+Epoch 3: Loss = 0.7053763270378113, MAE = 0.6282157897949219
+Epoch 4: Loss = 0.7044493556022644, MAE = 0.627899169921875
+Epoch 5: Loss = 0.703209638595581, MAE = 0.6272200345993042
+Epoch 6: Loss = 0.7025228142738342, MAE = 0.6266223788261414
+Epoch 7: Loss = 0.7013389468193054, MAE = 0.62616366147995
+Epoch 8: Loss = 0.7012447118759155, MAE = 0.626340925693512
+Epoch 9: Loss = 0.7008843421936035, MAE = 0.6263161897659302
+Epoch 10: Loss = 0.7001814842224121, MAE = 0.6258469820022583
+Epoch 11: Loss = 0.7006029486656189, MAE = 0.6260581016540527
+Epoch 12: Loss = 0.700245201587677, MAE = 0.6259238123893738
+Epoch 13: Loss = 0.6998435258865356, MAE = 0.6255122423171997
+Epoch 14: Loss = 0.6997337341308594, MAE = 0.6253139972686768
+Epoch 15: Loss = 0.6997116208076477, MAE = 0.6251299977302551
+Epoch 16: Loss = 0.699403703212738, MAE = 0.6254212856292725
+Epoch 17: Loss = 0.6990288496017456, MAE = 0.6251856088638306
+Epoch 18: Loss = 0.6989213824272156, MAE = 0.625009298324585
+Epoch 19: Loss = 0.6991170048713684, MAE = 0.6253772974014282
+Epoch 20: Loss = 0.6987175941467285, MAE = 0.6247353553771973
+Epoch 21: Loss = 0.6989221572875977, MAE = 0.6247790455818176
+Epoch 22: Loss = 0.6989554762840271, MAE = 0.6252496242523193
+Epoch 23: Loss = 0.6984623074531555, MAE = 0.6249624490737915
+Epoch 24: Loss = 0.6992499232292175, MAE = 0.6252095103263855
+Epoch 25: Loss = 0.698403000831604, MAE = 0.6248780488967896
+Epoch 26: Loss = 0.6982405781745911, MAE = 0.6245723962783813
+Epoch 27: Loss = 0.6988308429718018, MAE = 0.625002384185791
+Epoch 28: Loss = 0.6988797187805176, MAE = 0.6248522400856018
+Epoch 29: Loss = 0.6981606483459473, MAE = 0.6249082088470459
+Epoch 30: Loss = 0.6980540752410889, MAE = 0.6245489716529846
+Epoch 31: Loss = 0.6981762051582336, MAE = 0.6246173977851868
+Epoch 32: Loss = 0.6982497572898865, MAE = 0.6247618198394775
+Epoch 33: Loss = 0.6980252265930176, MAE = 0.6249825358390808
+Epoch 34: Loss = 0.6979789137840271, MAE = 0.6246053576469421
+Epoch 35: Loss = 0.6980347037315369, MAE = 0.6248635053634644
+Epoch 36: Loss = 0.6977786421775818, MAE = 0.6243159174919128
+Epoch 37: Loss = 0.6980361342430115, MAE = 0.6247730851173401
+Epoch 38: Loss = 0.6981427073478699, MAE = 0.6246519088745117
+Epoch 39: Loss = 0.6977683305740356, MAE = 0.6245717406272888
+Epoch 40: Loss = 0.6975683569908142, MAE = 0.6246529817581177
+Epoch 41: Loss = 0.697871744632721, MAE = 0.6247150301933289
+Epoch 42: Loss = 0.6980435252189636, MAE = 0.6247749924659729
+Epoch 43: Loss = 0.6977730393409729, MAE = 0.6246309876441956
+Epoch 44: Loss = 0.6976891756057739, MAE = 0.6243056654930115
+Epoch 45: Loss = 0.6978077292442322, MAE = 0.6247830986976624
+Epoch 46: Loss = 0.6978294849395752, MAE = 0.624419093132019
+Epoch 47: Loss = 0.6976174712181091, MAE = 0.6245185732841492
+Epoch 48: Loss = 0.6974222660064697, MAE = 0.6245062947273254
+Epoch 49: Loss = 0.6975627541542053, MAE = 0.6245120167732239
+Epoch 50: Loss = 0.6978248953819275, MAE = 0.6243880391120911
+Evaluate Result: Test loss: 0.693547248840332, Test MAE: 0.6231892704963684
+```
+
+可见评估后的`loss`与`MAE`均处在相对较低的水平，说明`GCM_model.h5`模型的血糖预测能力较强，达到了项目的预期目标。评估结果的可视化如下：
+
+## 4.2 基于全
+
+## 4.3 
 
 # 5 预测结果&可视化
 
