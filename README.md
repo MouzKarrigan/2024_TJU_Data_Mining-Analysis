@@ -12,6 +12,12 @@
 
 2151617 郑埴 2152970 李锦霖 2154306 李泽凯 2154314 郑楷
 
+## 1.4 代码管理
+
+我们采用`Github`来进行本项目的代码管理与版本控制，所有的源代码、环境、报告文档与PPT都存储在以下仓库中：
+
+[github.com/MouzKarrigan/2024_TJU_Data_Mining-Analysis](https://github.com/MouzKarrigan/2024_TJU_Data_Mining-Analysis)
+
 # 2 数据集分析
 
 ## 2.1 所用数据集介绍
@@ -353,6 +359,39 @@ model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolu
 model.summary()
 ```
 
+模型运行时将会读取前序步骤中预处理的数据，同时将对数据进行进一步的处理，分离数据中的时序特征和预测目标值，并将输入数据进行标准化操作方便后续训练。
+
+```python
+# 分离特征和目标值
+time_series_features = data[time_serise_attribute].values
+static_features = data[static_attribute].values
+targets = data[target_attribute].values
+
+def create_sequences(features, targets, static_features, time_steps=10):
+    ts_X,  y = [], []
+    for i in range(len(features) - time_steps):
+        ts_X.append(features[i:i+time_steps])
+        static_X = static_features[i]
+        y.append(targets[i+time_steps])
+    return np.array(ts_X), np.array(static_X), np.array(y)
+
+ts_X, static_X, y = create_sequences(time_series_features, targets, static_features)
+
+# 数据标准化
+scaler_ts_X = StandardScaler()
+ts_X = scaler_ts_X.fit_transform(ts_X.reshape(-1, ts_X.shape[-1])).reshape(ts_X.shape)
+
+scaler_static_X = StandardScaler()
+static_X = scaler_static_X.fit_transform(static_X)
+
+scaler_y = StandardScaler()
+y = scaler_y.fit_transform(y)
+
+self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y_train, self.y_test = train_test_split(
+    ts_X, static_X, y, test_size=0.2, random_state=42
+)
+```
+
 ## 3.2 模型部署
 
 由于本地机器的算力限制，为了节约时间成本，我们选择将模型部署在云端的`AutoDL`平台上。我们按时租用了一张`RTX 4090D(24GB)`的GPU，CPU配置为`15 vCPU Intel(R) Xeon(R) Platinum 8474C`，镜像版本为`TensorFlow  2.9.0 Python  3.8(ubuntu20.04) Cuda  11.2`。云端模型容器的具体配置如下图所示：
@@ -361,9 +400,7 @@ model.summary()
 
 之后我们采用`JupyterLab`将3.1中的已构建的模型代码与2.2.10中预处理产出的数据上传至云端容器实例中。
 
-## 3.3 训练过程
-
-## 3.4 训练结果
+## 3.3 模型训练结果
 
 # 4 模型效果验证
 

@@ -12,6 +12,12 @@ This paper aims to construct a blood glucose level time series prediction model 
 
 2151617 Zheng Zhi 2152970 Li Jinlin 2154306 Li Zekai 2154314 Zheng Kai
 
+## 1.4 Code Management
+
+We use `Github` for code management and version control in this project. All source code, environments, report documents, and PPT slides are stored in the following repository:
+
+[github.com/MouzKarrigan/2024_TJU_Data_Mining-Analysis](https://github.com/MouzKarrigan/2024_TJU_Data_Mining-Analysis)
+
 # 2 Dataset Analysis
 
 ## 2.1 Dataset Introduction
@@ -353,6 +359,39 @@ model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolu
 model.summary()
 ```
 
+During model execution, it will read the preprocessed data from previous steps, further process the data by separating the temporal features and prediction targets, and normalize the input data to facilitate subsequent training.
+
+```python
+# Separating the temporal features and prediction targets
+time_series_features = data[time_serise_attribute].values
+static_features = data[static_attribute].values
+targets = data[target_attribute].values
+
+def create_sequences(features, targets, static_features, time_steps=10):
+    ts_X,  y = [], []
+    for i in range(len(features) - time_steps):
+        ts_X.append(features[i:i+time_steps])
+        static_X = static_features[i]
+        y.append(targets[i+time_steps])
+    return np.array(ts_X), np.array(static_X), np.array(y)
+
+ts_X, static_X, y = create_sequences(time_series_features, targets, static_features)
+
+# Normalize the input data
+scaler_ts_X = StandardScaler()
+ts_X = scaler_ts_X.fit_transform(ts_X.reshape(-1, ts_X.shape[-1])).reshape(ts_X.shape)
+
+scaler_static_X = StandardScaler()
+static_X = scaler_static_X.fit_transform(static_X)
+
+scaler_y = StandardScaler()
+y = scaler_y.fit_transform(y)
+
+self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y_train, self.y_test = train_test_split(
+    ts_X, static_X, y, test_size=0.2, random_state=42
+)
+```
+
 ## 3.2 Model Deployment
 
 Due to the computational limitations of the local machine and to save time, we chose to deploy the model on the cloud-based `AutoDL` platform. We rented an `RTX 4090D (24GB)` GPU, with a CPU configuration of `15 vCPU Intel(R) Xeon(R) Platinum 8474C`, on an hourly basis. The image version used was `TensorFlow 2.9.0 Python 3.8 (ubuntu 20.04) Cuda 11.2`. The specific configuration of the cloud model container is shown in the following image:
@@ -360,5 +399,7 @@ Due to the computational limitations of the local machine and to save time, we c
 ![pic1](/pic/1.png)
 
 We then used `JupyterLab` to upload the model code constructed in section 3.1 and the preprocessed data from section 2.2.10 to the cloud container instance.
+
+## 3.3 Model Training Result
 
 
