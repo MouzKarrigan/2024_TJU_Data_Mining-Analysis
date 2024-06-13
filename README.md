@@ -308,3 +308,70 @@ Date,CGM (mg / dl),Dietary intake,"CSII - bolus insulin (Novolin R, IU)","CSII -
 
 # 3 血糖预测模型
 
+## 3.1 模型构建
+
+为了依据`ShanghaiT1DM`和`ShanghaiT2DM`数据集中所给的的时序数据和静态数据，预测任意患者在15，30，45与60分钟后的血糖水平，而`TCN`层在时序数据处理中表现出色，通过卷积和残差连接能够有效捕捉时序数据的依赖关系和特征，所以我们选择TCN层处理所有的时序数据，包括`各种药物在任意时间的浓度`、`给药信息`、`进食信息`以及患者的前序`CGM`。同时`Flatten`层确保时序数据的嵌入向量的像素被扁平化处理，成为后续所需的规整的N维向量。
+
+```python
+ts_input = Input(shape=(ts_X_train.shape[1], ts_X_train.shape[2]))
+ts_embedding = TCN(64)(ts_input)
+ts_embedding = Flatten()(ts_embedding)
+```
+
+而所有的静态数据，包括患者的`编号`、`身高`、`体重`和`性别`等，我们通过简单的`Dense`层对其进行处理，保证这类静态数据对血糖水平的影响也能被预测模型所考虑到的同时，与上述处理后的时序数据具有相同的嵌入维度N。
+
+```python
+static_input = Input(shape=(static_X_train.shape[1],))
+static_embedding = Dense(64, activation='relu')(static_input)
+```
+
+之后我们通过设计一个`cross_attention`层，用矩阵乘法计算上述所得的时序数据`ts_embedding`和静态数据`static_embedding`之间的注意力得分，而后通过`Softmax`处理得到权重，加权求和并展平后输出规整的N维向量。这样便对上述的N维时序数据和静态数据进行了编码，利用`TCN`、`Dense`和`cross_attention`三个编码层融合考量了所有因素对血糖水平的影响。
+
+```python
+def cross_attention(x1, x2):
+    attention_scores = tf.matmul(x1, x2, transpose_b=True)
+    attention_weights = tf.nn.softmax(attention_scores, axis=-1)
+    attended_vector = tf.matmul(attention_weights, x2)
+    return attended_vector
+
+cross_attention_output = cross_attention(tf.expand_dims(ts_embedding, axis=1), tf.expand_dims(static_embedding, axis=1))
+cross_attention_output = Flatten()(cross_attention_output)
+```
+
+在解码部分我们通过`Dense`层对前序编码的N维向量进行进一步处理，输出维度为64，激活函数为ReLU，然后输出4个目标值，预测未来15、30、45和60分钟的血糖水平。
+
+```python
+output = Dense(64, activation='relu')(cross_attention_output)
+output = Dense(4)(output)  # 输出层，预测4个目标值
+```
+
+最后通过`Tenserflow`库中封装函数构建、编译与运行上述的模型。
+
+```python
+model = Model(inputs=[ts_input, static_input], outputs=output)
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+model.summary()
+```
+
+## 3.2 模型部署
+
+由于本地机器的算力限制，为了节约时间成本，我们选择将模型部署在云端的`AutoDL`平台上。我们按时租用了一张`RTX 4090D(24GB)`的GPU，CPU配置为`15 vCPU Intel(R) Xeon(R) Platinum 8474C`，镜像版本为`TensorFlow  2.9.0 Python  3.8(ubuntu20.04) Cuda  11.2`。云端模型容器的具体配置如下图所示：
+
+![pic1](/pic/1.png)
+
+之后我们采用`JupyterLab`将3.1中的已构建的模型代码与2.2.10中预处理产出的数据上传至云端容器实例中。
+
+## 3.3 训练过程
+
+## 3.4 训练结果
+
+# 4 模型效果验证
+
+## 4.1 测试集选取
+
+## 4.2 验证模型
+
+## 4.3 验证结果
+
+# 5 预测结果&可视化
+

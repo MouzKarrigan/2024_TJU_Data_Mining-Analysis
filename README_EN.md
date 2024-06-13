@@ -308,3 +308,57 @@ Date,CGM (mg / dl),Dietary intake,"CSII - bolus insulin (Novolin R, IU)","CSII -
 
 # 3 Blood Glucose Prediction Model
 
+## 3.1 Model Construction
+
+To predict the blood glucose levels of any patient at 15, 30, 45, and 60 minutes based on the time series and static data provided in the `ShanghaiT1DM` and `ShanghaiT2DM` datasets, we chose the `TCN` layer for processing all time series data due to its outstanding performance in capturing dependencies and features in sequential data through convolution and residual connections. This includes `drug concentrations at any given time`, `medication information`, `dietary intake`, and the patient's previous `CGM` data. Additionally, the `Flatten` layer ensures that the embedding vectors of the time series data are flattened into structured N-dimensional vectors required for subsequent processing.
+
+```python
+ts_input = Input(shape=(ts_X_train.shape[1], ts_X_train.shape[2]))
+ts_embedding = TCN(64)(ts_input)
+ts_embedding = Flatten()(ts_embedding)
+```
+
+All static data, including the patient's `ID`, `height`, `weight`, and `gender`, is processed through a simple `Dense` layer. This ensures that the static data's influence on blood glucose levels is considered by the prediction model and has the same embedding dimension N as the processed time series data.
+
+```python
+static_input = Input(shape=(static_X_train.shape[1],))
+static_embedding = Dense(64, activation='relu')(static_input)
+```
+
+Next, we designed a `cross_attention` layer that calculates the attention scores between the `ts_embedding` of the time series data and the `static_embedding` of the static data using matrix multiplication. The scores are then processed with `Softmax` to obtain weights, which are used to compute a weighted sum. After flattening, the output is a structured N-dimensional vector. In this way, the N-dimensional time series data and static data are encoded. By utilizing the `TCN`, `Dense`, and `cross_attention` layers, the model comprehensively considers the influence of all factors on blood glucose levels.
+
+```python
+def cross_attention(x1, x2):
+    attention_scores = tf.matmul(x1, x2, transpose_b=True)
+    attention_weights = tf.nn.softmax(attention_scores, axis=-1)
+    attended_vector = tf.matmul(attention_weights, x2)
+    return attended_vector
+
+cross_attention_output = cross_attention(tf.expand_dims(ts_embedding, axis=1), tf.expand_dims(static_embedding, axis=1))
+cross_attention_output = Flatten()(cross_attention_output)
+```
+
+In the decoding part, we further process the previously encoded N-dimensional vector using a `Dense` layer with an output dimension of 64 and a ReLU activation function. Then, we output four target values to predict the blood glucose levels for the next 15, 30, 45, and 60 minutes.
+
+```python
+output = Dense(64, activation='relu')(cross_attention_output)
+output = Dense(4)(output)  # Output Layer
+```
+
+Finally, we use the functions provided in the `TensorFlow` library to build, compile, and run the aforementioned model.
+
+```python
+model = Model(inputs=[ts_input, static_input], outputs=output)
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+model.summary()
+```
+
+## 3.2 Model Deployment
+
+Due to the computational limitations of the local machine and to save time, we chose to deploy the model on the cloud-based `AutoDL` platform. We rented an `RTX 4090D (24GB)` GPU, with a CPU configuration of `15 vCPU Intel(R) Xeon(R) Platinum 8474C`, on an hourly basis. The image version used was `TensorFlow 2.9.0 Python 3.8 (ubuntu 20.04) Cuda 11.2`. The specific configuration of the cloud model container is shown in the following image:
+
+![pic1](/pic/1.png)
+
+We then used `JupyterLab` to upload the model code constructed in section 3.1 and the preprocessed data from section 2.2.10 to the cloud container instance.
+
+
