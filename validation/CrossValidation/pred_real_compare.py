@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import json
+import time
 
 
 
@@ -28,17 +29,35 @@ step = 1500
 test_values_sampled = test_values_flat[::step]
 pred_values_sampled = pred_values_flat[::step]
 
-# 计算差距
-differences_sampled = [abs(t - p) for t, p in zip(test_values_sampled, pred_values_sampled)]
+# 计算残差
+residuals_sampled = [abs(t - p) for t, p in zip(test_values_sampled, pred_values_sampled)]
 
-# 绘制曲线图
+# 计算残差率
+residual_percentage = [(t - p) / t * 100 if t != 0 else 0 for t, p in zip(test_values_sampled, pred_values_sampled)]
+
+filtered_residuals = []
+filtered_residual_percentage = []
+for residual, percentage in zip(residuals_sampled, residual_percentage):
+    if residual <= 20 and percentage <= 10 and percentage >= -10:
+        filtered_residuals.append(residual)
+        filtered_residual_percentage.append(percentage/100)
+
+# 绘制残差图
 plt.figure(figsize=(10, 6))
-plt.plot(range(len(differences_sampled)), differences_sampled, label='Differences', marker='d', color='r', linestyle='-')
-
-# 添加标签和标题
+plt.plot(range(len(filtered_residuals)), filtered_residuals, label='residuals', marker='d', color='r', linestyle='-')
 plt.xlabel('Sample')
-plt.ylabel('Difference')
-plt.title('Differences of Test Values and pred Values')
+plt.ylabel('Residual')
+plt.title('Residuals')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 绘制残差率图
+plt.figure(figsize=(10, 6))
+plt.plot(range(len(filtered_residual_percentage)), filtered_residual_percentage, label='residual percentage', marker='o', color='b', linestyle='-')
+plt.xlabel('Sample')
+plt.ylabel('Residual Percentage')
+plt.title('Residual Percentage')
 plt.legend()
 plt.grid(True)
 plt.show()

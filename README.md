@@ -526,13 +526,8 @@ Evaluate Result: Test loss: 0.693547248840332, Test MAE: 0.6231892704963684
 ![MAE curve](./pic/MAE_Curve.png)
 
 
-## 4.2 基于均方误差（MSE）的评估
 
 ## 4.3 基于全数据集的交叉验证评估
-
-
-
-## 4.2 基于全数据集预测的评估
 
 ### 4.2.1 评估过程
 
@@ -552,8 +547,12 @@ with open("y_test.json", "w") as file:
 
 ### 4.2.2 评估结果&可视化
 
-我们将所有的预测值导出并保存在本地项目的`y_pred.json`中，将所有的真实值导出并保存在本地项目的`y_test.json`中，可视化结果如下：
+我们将所有的预测值导出并保存在本地项目的`y_pred.json`中，将所有的真实值导出并保存在本地项目的`y_test.json`中，分析预测值和真实值之间的残差和残差率，可视化结果如下：
 
-## 4.3 【LZK补充】
+![Diff curve](./pic/Diff_Curve.png)
+![Diff Ratio curve](./pic/Diff_Ratio_Curve.png)
 
-## 4.4 【LZK补充】
+
+## 4.3 基于均方误差（MSE）的评估
+
+
