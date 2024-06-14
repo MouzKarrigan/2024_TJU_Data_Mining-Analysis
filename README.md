@@ -554,13 +554,29 @@ Epoch 50: Loss = 0.0960533395409584, MAE = 0.2172061800956726
 Evaluate Result: Test loss: 0.143349751830101, Test MAE: 0.2549135386943817
 ```
 
-可见评估后的`loss`与`MAE`均处在相对较低的水平，说明`GCM_model.h5`模型的血糖预测能力较强，达到了项目的预期目标。评估结果的可视化如下：
+可见评估后的`loss`与`MAE`均处在相对较低的水平，说明`GCM_model.h5`模型的血糖预测能力较强，达到了项目的预期目标。
+
+为了更加直观显示`GCM_model.h5`模型的血糖预测能力以及其`MAE`的波动范围，我们在`MAE_curve.py`中，利用`matplotlib.pyplot`库对其进行曲线可视化：
+
+```python
+plt.figure(figsize=(10, 6))
+plt.plot(epochs, mae, marker='o', linestyle='-')
+plt.title('MAE Curve')
+plt.xlabel('Epoch')
+plt.ylabel('MAE')
+plt.grid(True)
+plt.show()
+```
+
+评估结果的可视化如下：
 
 ![MAE curve](./pic/MAE_Curve.png)
 
+由于该曲线是训练过程中生成的，而训练过程中的数据是经过3.3的格式标准化后的，难免产生误差，我们最终利用原始数据重新计算了`MAE`水平，具体实现过程请看4.3.3，结果如下：
 
+![MAE_MSE result](./pic/MAE_MSE_Result.png)
 
-## 4.3 基于全数据集的交叉验证评估
+## 4.2 基于全数据集的交叉验证评估
 
 ### 4.2.1 评估过程
 
@@ -580,11 +596,101 @@ with open("y_test.json", "w") as file:
 
 ### 4.2.2 评估结果&可视化
 
-我们将所有的预测值导出并保存在本地项目的`y_pred.json`中，将所有的真实值导出并保存在本地项目的`y_test.json`中，分析预测值和真实值之间的残差和残差率，可视化结果如下：
+我们将所有的预测值导出并保存在本地项目的`y_pred.json`中，将所有的真实值导出并保存在本地项目的`y_test.json`中，在`pred_real_compare.py`中分析预测值和真实值之间的残差和残差率，公式如下：
+
+```python
+residual_percentage = [(t - p) / t * 100 if t != 0 else 0 for t, p in zip(test_values_sampled, pred_values_sampled)]
+
+filtered_residuals = []
+filtered_residual_percentage = []
+for residual, percentage in zip(residuals_sampled, residual_percentage):
+    if residual <= 20 and percentage <= 10 and percentage >= -10:
+        filtered_residuals.append(residual)
+        filtered_residual_percentage.append(percentage/100)
+```
+
+之后绘制残差与残差率图：
+
+```python
+# 绘制残差图
+plt.figure(figsize=(10, 6))
+plt.plot(range(len(filtered_residuals)), filtered_residuals, label='residuals', marker='d', color='r', linestyle='-')
+plt.xlabel('Sample')
+plt.ylabel('Residual')
+plt.title('Residuals')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 绘制残差率图
+plt.figure(figsize=(10, 6))
+plt.plot(range(len(filtered_residual_percentage)), filtered_residual_percentage, label='residual percentage', marker='o', color='b', linestyle='-')
+plt.xlabel('Sample')
+plt.ylabel('Residual Percentage')
+plt.title('Residual Percentage')
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
+可视化结果如下：
 
 ![Diff curve](./pic/Diff_Curve.png)
 ![Diff Ratio curve](./pic/Diff_Ratio_Curve.png)
 
-
 ## 4.3 基于均方误差（MSE）的评估
+
+### 4.3.1 评估模型介绍
+
+均方误差（MSE）是一种常用的评估预测模型性能的指标。它通过计算预测值与实际值之间的平方差的平均值来衡量模型的误差。由于误差被平方，`MSE`对较大的误差赋予了更高的权重，这使其特别适用于识别那些偶尔会产生较大偏差的模型。`MSE`特别适用于评估回归模型，提供了一个清晰的定量指标来衡量模型的预测精度。
+
+### 4.3.2 评估过程
+
+我们首先在`cal_MSE_MAE.py`中读取先前模型产出的`y_pred.json`数据与原始`y_test.json`数据，并初始化列表。
+
+```python
+test_values = []
+pred_values = []
+
+with open(TEST_PATH, 'r') as file:
+    test_values = json.load(file)
+
+with open(PRED_PATH, 'r') as file:
+    pred_values = json.load(file)
+
+    # 初始化列表
+test_15min, test_30min, test_45min, test_60min = [], [], [], []
+pred_15min, pred_30min, pred_45min, pred_60min = [], [], [], []
+```
+
+然后将15，30，45和60分钟的血糖浓度数据分别拆分：
+
+```python
+or i in range(len(test_values)):
+
+    test_15min.append(test_values[i][0])
+    test_30min.append(test_values[i][1])
+    test_45min.append(test_values[i][2])
+    test_60min.append(test_values[i][3])
+    
+    pred_15min.append(pred_values[i][0])
+    pred_30min.append(pred_values[i][1])
+    pred_45min.append(pred_values[i][2])
+    pred_60min.append(pred_values[i][3])
+```
+
+最后计算`MSE`水平并打印结果：
+
+```python
+mse_15min = np.mean((np.array(test_15min) - np.array(pred_15min)) ** 2)
+mse_30min = np.mean((np.array(test_30min) - np.array(pred_30min)) ** 2)
+mse_45min = np.mean((np.array(test_45min) - np.array(pred_45min)) ** 2)
+mse_60min = np.mean((np.array(test_60min) - np.array(pred_60min)) ** 2)
+```
+
+### 4.3.3 评估结果&可视化
+
+均方误差（MSE）的评估结果如下：
+
+![MAE_MSE result](./pic/MAE_MSE_Result.png)
 

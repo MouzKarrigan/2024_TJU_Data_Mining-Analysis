@@ -554,7 +554,27 @@ Epoch 50: Loss = 0.0960533395409584, MAE = 0.2172061800956726
 Evaluate Result: Test loss: 0.143349751830101, Test MAE: 0.2549135386943817
 ```
 
-It is evident that the evaluated `loss` and `MAE` are both at relatively low levels, indicating that the blood glucose prediction ability of the `GCM_model.h5` model is strong and has met the project's expected goals. The visualization of the evaluation results is as follows:
+It is evident that the evaluated `loss` and `MAE` are both at relatively low levels, indicating that the blood glucose prediction ability of the `GCM_model.h5` model is strong and has met the project's expected goals. 
+
+To more intuitively display the blood glucose prediction capabilities of the `GCM_model.h5` model and the fluctuation range of its `MAE`, we visualized it using the `matplotlib.pyplot` library in `MAE_curve.py`:
+
+```python
+plt.figure(figsize=(10, 6))
+plt.plot(epochs, mae, marker='o', linestyle='-')
+plt.title('MAE Curve')
+plt.xlabel('Epoch')
+plt.ylabel('MAE')
+plt.grid(True)
+plt.show()
+```
+
+The visualization of the evaluation results is as follows:
+
+![MAE curve](./pic/MAE_Curve.png)
+
+Since this curve was generated during the training process and the data used during training was standardized as described in section 3.3, some errors were inevitable. We eventually recalculated the `MAE` level using the original data. For the specific implementation process, please refer to section 4.3.3 The results are as follows:
+
+![MAE_MSE result](./pic/MAE_MSE_Result.png)
 
 ## 4.2 Evaluation Based on Predictions of the Entire Dataset
 
@@ -576,8 +596,99 @@ with open("y_test.json", "w") as file:
 
 ### 4.2.2 Evaluation Results & Visualization
 
-We exported all predicted values and saved them in `y_pred.json` in the local project. All actual values were exported and saved in `y_test.json` in the local project. The visualization results are as follows:
+We exported all predicted values and saved them in `y_pred.json` in the local project. All actual values were exported and saved in `y_test.json` in the local project. In `pred_real_compare.py`, we analyze the residuals and residual percentages between the predicted values and the actual values using the following formula:
 
-## 4.3 【LZK补充】
+```python
+residual_percentage = [(t - p) / t * 100 if t != 0 else 0 for t, p in zip(test_values_sampled, pred_values_sampled)]
 
-## 4.4 【LZK补充】
+filtered_residuals = []
+filtered_residual_percentage = []
+for residual, percentage in zip(residuals_sampled, residual_percentage):
+    if residual <= 20 and percentage <= 10 and percentage >= -10:
+        filtered_residuals.append(residual)
+        filtered_residual_percentage.append(percentage/100)
+```
+
+Afterward, we plot the residuals and residual percentage graphs:
+
+```python
+# Plotting the residuals
+plt.figure(figsize=(10, 6))
+plt.plot(range(len(filtered_residuals)), filtered_residuals, label='residuals', marker='d', color='r', linestyle='-')
+plt.xlabel('Sample')
+plt.ylabel('Residual')
+plt.title('Residuals')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Plotting the residual percentage
+plt.figure(figsize=(10, 6))
+plt.plot(range(len(filtered_residual_percentage)), filtered_residual_percentage, label='residual percentage', marker='o', color='b', linestyle='-')
+plt.xlabel('Sample')
+plt.ylabel('Residual Percentage')
+plt.title('Residual Percentage')
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
+The visualization results are as follows:
+
+![Diff curve](./pic/Diff_Curve.png)
+![Diff Ratio curve](./pic/Diff_Ratio_Curve.png)
+
+## 4.3 Evaluation Based on Mean Squared Error (MSE)
+
+### 4.3.1 Introduction to the Evaluation Model
+
+Mean Squared Error (MSE) is a commonly used metric for evaluating the performance of prediction models. It measures the model's error by calculating the average of the squared differences between the predicted values and the actual values. Since the errors are squared, `MSE` assigns greater weight to larger errors, making it particularly useful for identifying models that occasionally produce large deviations. `MSE` is especially suitable for evaluating regression models, providing a clear quantitative measure of the model's predictive accuracy.
+
+### 4.3.2 Evaluation Process
+
+First, in `cal_MSE_MAE.py`, we read the `y_pred.json` data produced by the previous model and the original `y_test.json` data, and initialize the lists.
+
+```python
+test_values = []
+pred_values = []
+
+with open(TEST_PATH, 'r') as file:
+    test_values = json.load(file)
+
+with open(PRED_PATH, 'r') as file:
+    pred_values = json.load(file)
+
+# Initialize lists
+test_15min, test_30min, test_45min, test_60min = [], [], [], []
+pred_15min, pred_30min, pred_45min, pred_60min = [], [], [], []
+```
+
+Then, we split the blood glucose concentration data for 15, 30, 45, and 60 minutes:
+
+```python
+for i in range(len(test_values)):
+    test_15min.append(test_values[i][0])
+    test_30min.append(test_values[i][1])
+    test_45min.append(test_values[i][2])
+    test_60min.append(test_values[i][3])
+    
+    pred_15min.append(pred_values[i][0])
+    pred_30min.append(pred_values[i][1])
+    pred_45min.append(pred_values[i][2])
+    pred_60min.append(pred_values[i][3])
+```
+
+Finally, we calculate the `MSE` levels and print the results:
+
+```python
+mse_15min = np.mean((np.array(test_15min) - np.array(pred_15min)) ** 2)
+mse_30min = np.mean((np.array(test_30min) - np.array(pred_30min)) ** 2)
+mse_45min = np.mean((np.array(test_45min) - np.array(pred_45min)) ** 2)
+mse_60min = np.mean((np.array(test_60min) - np.array(pred_60min)) ** 2)
+```
+
+### 4.3.3 Evaluation Results & Visualization
+
+The evaluation results based on Mean Squared Error (MSE) are as follows:
+
+![MAE_MSE result](./pic/MAE_MSE_Result.png)
