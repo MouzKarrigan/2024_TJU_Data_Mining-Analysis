@@ -147,3 +147,6 @@ if __name__ == "__main__":
     with open("y_test.json", "w") as file:
         y_test_str = json.dumps(y_test.tolist(), indent=4)
         file.write(y_test_str)
+        
+    mae = np.mean(np.abs(y_pred - y_test))
+    print(f'MAE: {mae}')

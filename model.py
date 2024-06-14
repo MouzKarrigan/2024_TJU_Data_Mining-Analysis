@@ -79,39 +79,69 @@ class TimeModel:
 
 
     def build_model(self):
-        ts_X_train, ts_X_test, static_X_train, static_X_test, y_train, y_test = \
-        self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y_train, self.y_test
-
         # 时序数据输入
-        ts_input = Input(shape=(ts_X_train.shape[1], ts_X_train.shape[2]))
-        # ts_embedding = TCN(64)(ts_input)
-        ts_embedding = LSTM(self.num_units)(ts_input)
-        ts_embedding = Flatten()(ts_embedding)
+        ts_input = Input(shape=(self.ts_X_train.shape[1], self.ts_X_train.shape[2]))
+
+        # 添加六层 LSTM 编码器，逐步减少单元数
+        x = LSTM(64, return_sequences=True)(ts_input)
+        x = LSTM(56, return_sequences=True)(x)
+        x = LSTM(48, return_sequences=True)(x)
+        x = LSTM(40, return_sequences=True)(x)
+        x = LSTM(36, return_sequences=True)(x)
+        x = LSTM(32)(x)
+        ts_embedding = Flatten()(x)
 
         # 静态特征输入
-        static_input = Input(shape=(static_X_train.shape[1],))
-        static_embedding = Dense(64, activation='relu')(static_input)
+        static_input = Input(shape=(self.static_X_train.shape[1],))
+
+        # 添加八层 Dense 编码器，逐步减少单元数
+        y = Dense(64, activation='relu')(static_input)
+        y = Dense(56, activation='relu')(y)
+        y = Dense(48, activation='relu')(y)
+        y = Dense(40, activation='relu')(y)
+        y = Dense(36, activation='relu')(y)
+        y = Dense(32, activation='relu')(y)
+        y = Dense(32, activation='relu')(y)  # 保持 32 维
+        y = Dense(32, activation='relu')(y)  # 保持 32 维
+        static_embedding = y
 
         # Cross-Attention层
-        def cross_attention(x1, x2):
-            attention_scores = tf.matmul(x1, x2, transpose_b=True)
+        def cross_attention(query, key, value):
+            attention_scores = tf.matmul(query, key, transpose_b=True)
             attention_weights = tf.nn.softmax(attention_scores, axis=-1)
-            attended_vector = tf.matmul(attention_weights, x2)
+            attended_vector = tf.matmul(attention_weights, value)
             return attended_vector
 
-        cross_attention_output = cross_attention(tf.expand_dims(ts_embedding, axis=1), tf.expand_dims(static_embedding, axis=1))
-        cross_attention_output = Flatten()(cross_attention_output)
+        # 使用静态特征作为查询，时序特征作为键和值
+        query1 = tf.expand_dims(static_embedding, axis=1)
+        key1 = tf.expand_dims(ts_embedding, axis=1)
+        value1 = tf.expand_dims(ts_embedding, axis=1)
+        cross_attention_output1 = cross_attention(query1, key1, value1)
+        cross_attention_output1 = Flatten()(cross_attention_output1)
 
-        # 解码层
-        output = Dense(64, activation='relu')(cross_attention_output)
-        output = Dense(4)(output)  # 输出层，预测3个目标值
+        # 使用时序特征作为查询，静态特征作为键和值
+        query2 = tf.expand_dims(ts_embedding, axis=1)
+        key2 = tf.expand_dims(static_embedding, axis=1)
+        value2 = tf.expand_dims(static_embedding, axis=1)
+        cross_attention_output2 = cross_attention(query2, key2, value2)
+        cross_attention_output2 = Flatten()(cross_attention_output2)
+
+        # 合并两个 cross-attention 输出
+        merged_attention_output = Concatenate()([cross_attention_output1, cross_attention_output2])
+
+        # 解码层，从合并后的维度逐渐减少到 4
+        z = Dense(64, activation='relu')(merged_attention_output)
+        z = Dense(56, activation='relu')(z)
+        z = Dense(48, activation='relu')(z)
+        z = Dense(40, activation='relu')(z)
+        z = Dense(36, activation='relu')(z)
+        z = Dense(32, activation='relu')(z)
+        z = Dense(16, activation='relu')(z)
+        output = Dense(4)(z)  # 输出层，预测4个目标值
 
         # 构建和编译模型
         self.model = Model(inputs=[ts_input, static_input], outputs=output)
         self.model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
-
-        # model.summary()
-
     
     def train_model(self, epochs=50, batch_size=32, validation_split=0.2):
         history = self.model.fit([self.ts_X_train, self.static_X_train], self.y_train,
