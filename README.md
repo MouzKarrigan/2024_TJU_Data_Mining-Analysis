@@ -328,39 +328,72 @@ Date,CGM (mg / dl),Dietary intake,"CSII - bolus insulin (Novolin R, IU)","CSII -
 
 ## 3.1 模型构建
 
-为了依据`ShanghaiT1DM`和`ShanghaiT2DM`数据集中所给的的时序数据和静态数据，预测任意患者在15，30，45与60分钟后的血糖水平，而`TCN`层在时序数据处理中表现出色，通过卷积和残差连接能够有效捕捉时序数据的依赖关系和特征，所以我们选择TCN层处理所有的时序数据，包括`各种药物在任意时间的浓度`、`给药信息`、`进食信息`以及患者的前序`CGM`。同时`Flatten`层确保时序数据的嵌入向量的像素被扁平化处理，成为后续所需的规整的N维向量。
+为了依据`ShanghaiT1DM`和`ShanghaiT2DM`数据集中所给的的时序数据和静态数据，预测任意患者在15，30，45与60分钟后的血糖水平，而`LSTM`层在时序数据处理中表现出色，通过卷积和残差连接能够有效捕捉时序数据的依赖关系和特征，所以我们选择TCN层处理所有的时序数据，包括`各种药物在任意时间的浓度`、`给药信息`、`进食信息`以及患者的前序`CGM`。同时`Flatten`层确保时序数据的嵌入向量的像素被扁平化处理，成为后续所需的规整的N维向量。
 
 ```python
-ts_input = Input(shape=(ts_X_train.shape[1], ts_X_train.shape[2]))
-ts_embedding = TCN(64)(ts_input)
-ts_embedding = Flatten()(ts_embedding)
+x = LSTM(64, return_sequences=True)(ts_input)
+x = LSTM(56, return_sequences=True)(x)
+x = LSTM(48, return_sequences=True)(x)
+x = LSTM(40, return_sequences=True)(x)
+x = LSTM(36, return_sequences=True)(x)
+x = LSTM(32)(x)
+ts_embedding = Flatten()(x)
 ```
 
 而所有的静态数据，包括患者的`编号`、`身高`、`体重`和`性别`等，我们通过简单的`Dense`层对其进行处理，保证这类静态数据对血糖水平的影响也能被预测模型所考虑到的同时，与上述处理后的时序数据具有相同的嵌入维度N。
 
 ```python
-static_input = Input(shape=(static_X_train.shape[1],))
-static_embedding = Dense(64, activation='relu')(static_input)
+y = Dense(64, activation='relu')(static_input)
+y = Dense(56, activation='relu')(y)
+y = Dense(48, activation='relu')(y)
+y = Dense(40, activation='relu')(y)
+y = Dense(36, activation='relu')(y)
+y = Dense(32, activation='relu')(y)
+y = Dense(32, activation='relu')(y)  # 保持 32 维
+y = Dense(32, activation='relu')(y)  # 保持 32 维
+static_embedding = y
 ```
 
 之后我们通过设计一个`cross_attention`层，用矩阵乘法计算上述所得的时序数据`ts_embedding`和静态数据`static_embedding`之间的注意力得分，而后通过`Softmax`处理得到权重，加权求和并展平后输出规整的N维向量。这样便对上述的N维时序数据和静态数据进行了编码，利用`TCN`、`Dense`和`cross_attention`三个编码层融合考量了所有因素对血糖水平的影响。
 
 ```python
-def cross_attention(x1, x2):
-    attention_scores = tf.matmul(x1, x2, transpose_b=True)
+# Cross-Attention层
+def cross_attention(query, key, value):
+    attention_scores = tf.matmul(query, key, transpose_b=True)
     attention_weights = tf.nn.softmax(attention_scores, axis=-1)
-    attended_vector = tf.matmul(attention_weights, x2)
+    attended_vector = tf.matmul(attention_weights, value)
     return attended_vector
 
-cross_attention_output = cross_attention(tf.expand_dims(ts_embedding, axis=1), tf.expand_dims(static_embedding, axis=1))
-cross_attention_output = Flatten()(cross_attention_output)
+# 使用静态特征作为查询，时序特征作为键和值
+query1 = tf.expand_dims(static_embedding, axis=1)
+key1 = tf.expand_dims(ts_embedding, axis=1)
+value1 = tf.expand_dims(ts_embedding, axis=1)
+cross_attention_output1 = cross_attention(query1, key1, value1)
+cross_attention_output1 = Flatten()(cross_attention_output1)
+
+# 使用时序特征作为查询，静态特征作为键和值
+query2 = tf.expand_dims(ts_embedding, axis=1)
+key2 = tf.expand_dims(static_embedding, axis=1)
+value2 = tf.expand_dims(static_embedding, axis=1)
+cross_attention_output2 = cross_attention(query2, key2, value2)
+cross_attention_output2 = Flatten()(cross_attention_output2)
 ```
 
 在解码部分我们通过`Dense`层对前序编码的N维向量进行进一步处理，输出维度为64，激活函数为ReLU，然后输出4个目标值，预测未来15、30、45和60分钟的血糖水平。
 
 ```python
-output = Dense(64, activation='relu')(cross_attention_output)
-output = Dense(4)(output)  # 输出层，预测4个目标值
+# 合并两个 cross-attention 输出
+merged_attention_output = Concatenate()([cross_attention_output1, cross_attention_output2])
+
+# 解码层，从合并后的维度逐渐减少到 4
+z = Dense(64, activation='relu')(merged_attention_output)
+z = Dense(56, activation='relu')(z)
+z = Dense(48, activation='relu')(z)
+z = Dense(40, activation='relu')(z)
+z = Dense(36, activation='relu')(z)
+z = Dense(32, activation='relu')(z)
+z = Dense(16, activation='relu')(z)
+output = Dense(4)(z)  # 输出层，预测4个目标值
 ```
 
 最后通过`Tenserflow`库中封装函数构建、编译与运行上述的模型。
@@ -468,57 +501,57 @@ print(f'Actual: {y_test[:5]}')  # 仅显示前5个真实值
 保存在`model_info.log`中的对本模型的基于均值绝对误差（MAE）的评估结果如下：
 
 ```log
-Epoch 1: Loss = 0.7274188995361328, MAE = 0.6401249170303345
-Epoch 2: Loss = 0.7078902721405029, MAE = 0.6293964385986328
-Epoch 3: Loss = 0.7053763270378113, MAE = 0.6282157897949219
-Epoch 4: Loss = 0.7044493556022644, MAE = 0.627899169921875
-Epoch 5: Loss = 0.703209638595581, MAE = 0.6272200345993042
-Epoch 6: Loss = 0.7025228142738342, MAE = 0.6266223788261414
-Epoch 7: Loss = 0.7013389468193054, MAE = 0.62616366147995
-Epoch 8: Loss = 0.7012447118759155, MAE = 0.626340925693512
-Epoch 9: Loss = 0.7008843421936035, MAE = 0.6263161897659302
-Epoch 10: Loss = 0.7001814842224121, MAE = 0.6258469820022583
-Epoch 11: Loss = 0.7006029486656189, MAE = 0.6260581016540527
-Epoch 12: Loss = 0.700245201587677, MAE = 0.6259238123893738
-Epoch 13: Loss = 0.6998435258865356, MAE = 0.6255122423171997
-Epoch 14: Loss = 0.6997337341308594, MAE = 0.6253139972686768
-Epoch 15: Loss = 0.6997116208076477, MAE = 0.6251299977302551
-Epoch 16: Loss = 0.699403703212738, MAE = 0.6254212856292725
-Epoch 17: Loss = 0.6990288496017456, MAE = 0.6251856088638306
-Epoch 18: Loss = 0.6989213824272156, MAE = 0.625009298324585
-Epoch 19: Loss = 0.6991170048713684, MAE = 0.6253772974014282
-Epoch 20: Loss = 0.6987175941467285, MAE = 0.6247353553771973
-Epoch 21: Loss = 0.6989221572875977, MAE = 0.6247790455818176
-Epoch 22: Loss = 0.6989554762840271, MAE = 0.6252496242523193
-Epoch 23: Loss = 0.6984623074531555, MAE = 0.6249624490737915
-Epoch 24: Loss = 0.6992499232292175, MAE = 0.6252095103263855
-Epoch 25: Loss = 0.698403000831604, MAE = 0.6248780488967896
-Epoch 26: Loss = 0.6982405781745911, MAE = 0.6245723962783813
-Epoch 27: Loss = 0.6988308429718018, MAE = 0.625002384185791
-Epoch 28: Loss = 0.6988797187805176, MAE = 0.6248522400856018
-Epoch 29: Loss = 0.6981606483459473, MAE = 0.6249082088470459
-Epoch 30: Loss = 0.6980540752410889, MAE = 0.6245489716529846
-Epoch 31: Loss = 0.6981762051582336, MAE = 0.6246173977851868
-Epoch 32: Loss = 0.6982497572898865, MAE = 0.6247618198394775
-Epoch 33: Loss = 0.6980252265930176, MAE = 0.6249825358390808
-Epoch 34: Loss = 0.6979789137840271, MAE = 0.6246053576469421
-Epoch 35: Loss = 0.6980347037315369, MAE = 0.6248635053634644
-Epoch 36: Loss = 0.6977786421775818, MAE = 0.6243159174919128
-Epoch 37: Loss = 0.6980361342430115, MAE = 0.6247730851173401
-Epoch 38: Loss = 0.6981427073478699, MAE = 0.6246519088745117
-Epoch 39: Loss = 0.6977683305740356, MAE = 0.6245717406272888
-Epoch 40: Loss = 0.6975683569908142, MAE = 0.6246529817581177
-Epoch 41: Loss = 0.697871744632721, MAE = 0.6247150301933289
-Epoch 42: Loss = 0.6980435252189636, MAE = 0.6247749924659729
-Epoch 43: Loss = 0.6977730393409729, MAE = 0.6246309876441956
-Epoch 44: Loss = 0.6976891756057739, MAE = 0.6243056654930115
-Epoch 45: Loss = 0.6978077292442322, MAE = 0.6247830986976624
-Epoch 46: Loss = 0.6978294849395752, MAE = 0.624419093132019
-Epoch 47: Loss = 0.6976174712181091, MAE = 0.6245185732841492
-Epoch 48: Loss = 0.6974222660064697, MAE = 0.6245062947273254
-Epoch 49: Loss = 0.6975627541542053, MAE = 0.6245120167732239
-Epoch 50: Loss = 0.6978248953819275, MAE = 0.6243880391120911
-Evaluate Result: Test loss: 0.693547248840332, Test MAE: 0.6231892704963684
+Epoch 1: Loss = 0.24813230335712433, MAE = 0.3392144441604614
+Epoch 2: Loss = 0.17603440582752228, MAE = 0.28965243697166443
+Epoch 3: Loss = 0.16945107281208038, MAE = 0.28416118025779724
+Epoch 4: Loss = 0.16450119018554688, MAE = 0.2798997163772583
+Epoch 5: Loss = 0.1617734283208847, MAE = 0.2778536379337311
+Epoch 6: Loss = 0.15967202186584473, MAE = 0.2754196226596832
+Epoch 7: Loss = 0.15808287262916565, MAE = 0.27424079179763794
+Epoch 8: Loss = 0.15543019771575928, MAE = 0.2722415626049042
+Epoch 9: Loss = 0.152229905128479, MAE = 0.2698534429073334
+Epoch 10: Loss = 0.15068094432353973, MAE = 0.2676985263824463
+Epoch 11: Loss = 0.1485109180212021, MAE = 0.2659306228160858
+Epoch 12: Loss = 0.14616045355796814, MAE = 0.264129638671875
+Epoch 13: Loss = 0.14481528103351593, MAE = 0.2629924714565277
+Epoch 14: Loss = 0.1432819664478302, MAE = 0.2612338960170746
+Epoch 15: Loss = 0.14213888347148895, MAE = 0.26077672839164734
+Epoch 16: Loss = 0.1405232697725296, MAE = 0.2589830756187439
+Epoch 17: Loss = 0.13920897245407104, MAE = 0.2579362392425537
+Epoch 18: Loss = 0.13700328767299652, MAE = 0.2558068633079529
+Epoch 19: Loss = 0.135841503739357, MAE = 0.25503242015838623
+Epoch 20: Loss = 0.1343383491039276, MAE = 0.25366151332855225
+Epoch 21: Loss = 0.13319242000579834, MAE = 0.25238853693008423
+Epoch 22: Loss = 0.13157425820827484, MAE = 0.25120872259140015
+Epoch 23: Loss = 0.13002479076385498, MAE = 0.24965637922286987
+Epoch 24: Loss = 0.12899799644947052, MAE = 0.2487075924873352
+Epoch 25: Loss = 0.12715759873390198, MAE = 0.24738220870494843
+Epoch 26: Loss = 0.1254996806383133, MAE = 0.24577780067920685
+Epoch 27: Loss = 0.12392573058605194, MAE = 0.24451224505901337
+Epoch 28: Loss = 0.12294596433639526, MAE = 0.2437702715396881
+Epoch 29: Loss = 0.12211327999830246, MAE = 0.24265168607234955
+Epoch 30: Loss = 0.11990866810083389, MAE = 0.2406342476606369
+Epoch 31: Loss = 0.11868849396705627, MAE = 0.23954859375953674
+Epoch 32: Loss = 0.11719253659248352, MAE = 0.2382337599992752
+Epoch 33: Loss = 0.11625178158283234, MAE = 0.23720043897628784
+Epoch 34: Loss = 0.11457919329404831, MAE = 0.23559845983982086
+Epoch 35: Loss = 0.11278732120990753, MAE = 0.23400256037712097
+Epoch 36: Loss = 0.111522376537323, MAE = 0.23233428597450256
+Epoch 37: Loss = 0.11087394505739212, MAE = 0.23186525702476501
+Epoch 38: Loss = 0.10904955863952637, MAE = 0.23011435568332672
+Epoch 39: Loss = 0.10804162174463272, MAE = 0.22891177237033844
+Epoch 40: Loss = 0.1072082668542862, MAE = 0.22841022908687592
+Epoch 41: Loss = 0.10584983229637146, MAE = 0.22709250450134277
+Epoch 42: Loss = 0.1048450917005539, MAE = 0.22595353424549103
+Epoch 43: Loss = 0.1035393550992012, MAE = 0.2244720607995987
+Epoch 44: Loss = 0.10208194702863693, MAE = 0.22328290343284607
+Epoch 45: Loss = 0.10101437568664551, MAE = 0.22216375172138214
+Epoch 46: Loss = 0.09999130666255951, MAE = 0.22099186480045319
+Epoch 47: Loss = 0.09851470589637756, MAE = 0.21978960931301117
+Epoch 48: Loss = 0.09900260716676712, MAE = 0.22022844851016998
+Epoch 49: Loss = 0.09660875797271729, MAE = 0.21708492934703827
+Epoch 50: Loss = 0.0960533395409584, MAE = 0.2172061800956726
+Evaluate Result: Test loss: 0.143349751830101, Test MAE: 0.2549135386943817
 ```
 
 可见评估后的`loss`与`MAE`均处在相对较低的水平，说明`GCM_model.h5`模型的血糖预测能力较强，达到了项目的预期目标。评估结果的可视化如下：
@@ -554,5 +587,4 @@ with open("y_test.json", "w") as file:
 
 
 ## 4.3 基于均方误差（MSE）的评估
-
 
