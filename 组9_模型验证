@@ -1,0 +1,193 @@
+# 2024_TJU_Data_Mining-Analysis_Model_Validation_Report
+
+# 1. Data Pre-process
+We use the same method to pre-process the given dataset from our final report part 2.2 Data Pre-process.
+
+# 2. Model
+We use the exact model generated from our final report part 3 Blood Glucose Prediction Model.
+
+# 3. Validation Process
+Shown in the `model_valid.py` in our github repository.
+1. **Import Necessary Libraries:**
+   ```python
+   import tensorflow as tf
+   from tensorflow.keras.models import Model, load_model
+   from tensorflow.keras.layers import Input, Dense, Flatten, Concatenate, LSTM
+   from sklearn.preprocessing import StandardScaler
+   from sklearn.model_selection import train_test_split
+   import os
+   import pandas as pd
+   import numpy as np
+   import json
+   ```
+   - TensorFlow and Keras are used for building and training the neural network.
+   - Sklearn is used for preprocessing and splitting the dataset.
+   - Pandas and NumPy are used for data manipulation and handling.
+   - OS and JSON libraries are used for file operations.
+
+2. **Initialize the TimeModel Class:**
+   ```python
+   class TimeModel:
+       def __init__(self, num_units=64, model_path="GCM_model.h5"):
+           self.scaler_ts_X = StandardScaler()
+           self.scaler_static_X = StandardScaler()
+           self.scaler_y = StandardScaler()
+           self.num_units  = num_units
+           self.model_save_path = model_path
+           # Load attributes for time series and static features
+           with open('pre-process/time_serise_attribute.json', 'r') as file:
+               time_serise_attribute = json.load(file)
+           with open('pre-process/static_attribute.json', 'r') as file:
+               static_attribute = json.load(file)
+           # Load data from CSV files
+           tmp_folder = 'pre-process/tmp_data'
+           tmp_files = os.listdir(tmp_folder)
+           all_data = [pd.read_csv(os.path.join(tmp_folder, file)) for file in tmp_files if file.endswith('.csv')]
+           data = pd.concat(all_data, ignore_index=True).drop(columns=['Date'])
+           target_attribute = ['15 min', '30 min', '45 min', '60 min']
+           # Separate features and targets
+           time_series_features = data[time_serise_attribute].values
+           static_features = data[static_attribute].values
+           targets = data[target_attribute].values
+   ```
+
+3. **Create Sequences:**
+   ```python
+   def create_sequences(features, targets, static_features, time_steps=10):
+       ts_X, static_X, y = [], [], []
+       for i in range(len(features) - time_steps):
+           ts_X.append(features[i:i+time_steps])
+           static_X.append(static_features[i])
+           y.append(targets[i+time_steps])
+       return np.array(ts_X), np.array(static_X), np.array(y)
+   ts_X, static_X, y = create_sequences(time_series_features, targets, static_features)
+   ```
+
+4. **Standardize the Data:**
+   ```python
+   ts_X = self.scaler_ts_X.fit_transform(ts_X.reshape(-1, ts_X.shape[-1])).reshape(ts_X.shape)
+   static_X = self.scaler_static_X.fit_transform(static_X)
+   y = self.scaler_y.fit_transform(y)
+   ```
+
+5. **Split the Data into Training and Testing Sets:**
+   ```python
+   self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y_train, self.y_test = train_test_split(
+       ts_X, static_X, y, test_size=0.2, random_state=42
+   )
+   self.model = None
+   ```
+
+6. **Build the Model:**
+   ```python
+   def build_model(self):
+       ts_input = Input(shape=(self.ts_X_train.shape[1], self.ts_X_train.shape[2]))
+       # Define residual LSTM block
+       def residual_lstm_block(x, num_units):
+           lstm1 = LSTM(num_units, return_sequences=True)(x)
+           lstm2 = LSTM(num_units, return_sequences=True)(lstm1)
+           res = Add()([x, lstm2])
+           return res
+       lstm_output = ts_input
+       for _ in range(20):  # Stack 20 residual LSTM layers
+           lstm_output = residual_lstm_block(lstm_output, self.num_units)
+       ts_embedding = Flatten()(lstm_output)
+       static_input = Input(shape=(self.static_X_train.shape[1],))
+       y = Dense(64, activation='relu')(static_input)
+       for units in [56, 48, 40, 36, 32, 32, 32]:  # Multiple dense layers for static features
+           y = Dense(units, activation='relu')(y)
+       static_embedding = y
+       # Cross-Attention layers
+       def cross_attention(query, key, value):
+           attention_scores = tf.matmul(query, key, transpose_b=True)
+           attention_weights = tf.nn.softmax(attention_scores, axis=-1)
+           attended_vector = tf.matmul(attention_weights, value)
+           return attended_vector
+       query1, key1, value1 = map(lambda t: tf.expand_dims(t, axis=1), (static_embedding, ts_embedding, ts_embedding))
+       cross_attention_output1 = Flatten()(cross_attention(query1, key1, value1))
+       query2, key2, value2 = map(lambda t: tf.expand_dims(t, axis=1), (ts_embedding, static_embedding, static_embedding))
+       cross_attention_output2 = Flatten()(cross_attention(query2, key2, value2))
+       merged_attention_output = Concatenate()([cross_attention_output1, cross_attention_output2])
+       z = Dense(64, activation='relu')(merged_attention_output)
+       for units in [56, 48, 40, 36, 32, 16]:  # Decoding dense layers
+           z = Dense(units, activation='relu')(z)
+       output = Dense(4)(z)  # Output layer with 4 targets
+       self.model = Model(inputs=[ts_input, static_input], outputs=output)
+       self.model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+   ```
+
+7. **Train the Model:**
+   ```python
+   def train_model(self, epochs=50, batch_size=32, validation_split=0.2):
+       history = self.model.fit([self.ts_X_train, self.static_X_train], self.y_train, epochs=epochs, batch_size=batch_size, validation_split=validation_split)
+       self.model.save(self.model_save_path)
+       return history
+   ```
+
+8. **Evaluate the Model:**
+   ```python
+   def evaluate_model(self):
+       test_loss, test_mae = self.model.evaluate([self.ts_X_test, self.static_X_test], self.y_test)
+       print(f'Test loss: {test_loss}, Test MAE: {test_mae}')
+       return f'Test loss: {test_loss}, Test MAE: {test_mae}'
+   ```
+
+9. **Predict with the Model:**
+   ```python
+   def predict(self):
+       ts_X, static_X = self.ts_X_predict, self.static_X_predict
+       y_pred = self.model.predict([ts_X, static_X])
+       y_pred = self.scaler_y.inverse_transform(y_pred)
+       return y_pred
+   ```
+
+10. **Load Pre-trained Model:**
+    ```python
+    def load_model(self, path):
+        self.model = load_model(path)
+    ```
+
+11. **Load Data for Prediction:**
+    ```python
+    def load_data(self, path):
+        data = pd.read_csv(path)
+        with open('pre-process/time_serise_attribute.json', 'r') as file:
+            time_serise_attribute = json.load(file)
+        with open('pre-process/static_attribute.json', 'r') as file:
+            static_attribute = json.load(file)
+        data = data.drop(columns=['Date'])
+        time_series_features = data[time_serise_attribute].values
+        static_features = data[static_attribute].values
+        def create_sequences(features, static_features, time_steps=10):
+            ts_X, static_X = [], []
+            for i in range(len(features) - time_steps):
+                ts_X.append(features[i:i+time_steps])
+                static_X.append(static_features[i])
+            return np.array(ts_X), np.array(static_X)
+        ts_X, static_X = create_sequences(time_series_features, static_features)
+        ts_X = self.scaler_ts_X.fit_transform(ts_X.reshape(-1, ts_X.shape[-1])).reshape(ts_X.shape)
+        static_X = self.scaler_static_X.fit_transform(static_X)
+        self.static_X_predict = static_X
+        self.ts_X_predict = ts_X
+    ```
+
+12. **Main Execution:**
+    ```python
+    if __name__ == "__main__":
+        model = TimeModel()
+        model.load_model("GCM_model.h5")
+        for data_path, output_path in zip(["data1.csv", "data2.csv", "data3.csv", "data4.csv", "data5.csv"],
+                                          ["vaild1.json", "vaild2.json", "vaild3.json", "vaild4.json", "vaild5.json"]):
+            model.load_data(data_path)
+            y_pred = model.predict()
+            with open(output_path, "w") as file:
+                y_pred_str = json.dumps(y_pred.tolist(), indent=4)
+                file.write(y_pred_str)
+    ```
+
+# 4. Validation Result
+Shown in the `valid1-5` in our github repository.
+| 2021/11/13 21:05 | 2021/11/14 21:05 | 2021/11/15 21:05 | 2021/11/16 21:05 | 2021/11/17 21:05 |
+|--|--|--|--|--|
+| 134.30130004882812 | 78.19591522216797 | 98.1829605102539 | 118.30003356933594 | 223.87347412109375 |
+
