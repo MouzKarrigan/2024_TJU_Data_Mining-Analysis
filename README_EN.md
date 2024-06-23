@@ -1,5 +1,7 @@
 # 2024_TJU_Data_Mining-Analysis_Report
 
+# Blood Glucose Prediction Model Based on Time Series Convolutional Neural Network
+
 # 1 Issue Analysis
 
 ## 1.1 Brief Introduction
@@ -441,13 +443,13 @@ self.ts_X_train, self.ts_X_test, self.static_X_train, self.static_X_test, self.y
 
 Due to the computational limitations of the local machine and to save time, we chose to deploy the model on the cloud-based `AutoDL` platform. We rented an `RTX 4090D (24GB)` GPU, with a CPU configuration of `15 vCPU Intel(R) Xeon(R) Platinum 8474C`, on an hourly basis. The image version used was `TensorFlow 2.9.0 Python 3.8 (ubuntu 20.04) Cuda 11.2`. The specific configuration of the cloud model container is shown in the following image:
 
-![pic1](/pic/1.png)
+![pic1](./pic/1.png)
 
 We then used `JupyterLab` to upload the model code constructed in section 3.1 and the preprocessed data from section 2.2.10 to the cloud container instance. Next, install the `sklearn` and `pandas` libraries required for the model on the cloud server. Since the server configuration already includes the `Tensorflow` library, there is no need to install it.
 
-![pic2](/pic/2.png)
+![pic2](./pic/2.png)
 
-![pic3](/pic/3.png)
+![pic3](./pic/3.png)
 
 ## 3.3 Model Training Result
 
